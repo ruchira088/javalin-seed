@@ -15,22 +15,25 @@ repositories {
 
 dependencies {
     implementation(
-            "io.javalin:javalin-bundle:$javalinVersion",
-            "com.typesafe:config:$typesafeConfigVersion",
-            "ch.qos.logback:logback-classic:$logbackVersion",
-            'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+        "io.javalin:javalin-bundle:$javalinVersion",
+        "com.typesafe:config:$typesafeConfigVersion",
+        "ch.qos.logback:logback-classic:$logbackVersion",
+        'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
     )
 
     testImplementation(
-            platform("org.junit:junit-bom:$junitVersion"),
-            'org.junit.jupiter:junit-jupiter',
-            'org.junit.platform:junit-platform-launcher',
-            "org.mockito:mockito-core:$mockitoVersion"
+        platform("org.junit:junit-bom:$junitVersion"),
+        'org.junit.jupiter:junit-jupiter',
+        'org.junit.platform:junit-platform-launcher',
+        "org.mockito:mockito-core:$mockitoVersion"
     )
 }
 
 application {
     mainClass = 'com.ruchij.App'
+    applicationDefaultJvmArgs = [
+        '-Dlogback.configurationFile=/opt/data/logback.xml'
+    ]
 }
 
 tasks.register('buildInformation') {

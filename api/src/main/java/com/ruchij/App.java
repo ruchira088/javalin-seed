@@ -2,6 +2,7 @@ package com.ruchij;
 
 import com.ruchij.config.ApplicationConfiguration;
 import com.ruchij.service.health.HealthServiceImpl;
+import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import com.ruchij.web.middleware.ExceptionMapper;
@@ -12,7 +13,6 @@ import io.javalin.json.JavalinJackson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.time.Clock;
 import java.util.List;
 import java.util.Properties;
@@ -27,18 +27,19 @@ public class App {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         Config config = ConfigFactory.load();
         ApplicationConfiguration applicationConfiguration = ApplicationConfiguration.parse(config);
 
         run(applicationConfiguration);
     }
 
-    public static void run(ApplicationConfiguration applicationConfiguration) throws IOException {
+    public static void run(ApplicationConfiguration applicationConfiguration) {
         Properties properties = System.getProperties();
         Clock clock = Clock.systemUTC();
+        BuildInformation buildInformation = BuildInformation.create();
 
-        Routes routes = routes(applicationConfiguration, properties, clock);
+        Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
 
         Javalin app = javalin(routes, applicationConfiguration.httpConfiguration().allowedOrigins());
         ExceptionMapper.handle(app);
@@ -74,9 +75,13 @@ public class App {
         });
     }
 
-    private static Routes routes(ApplicationConfiguration applicationConfiguration, Properties properties, Clock clock)
-        throws IOException {
-        HealthServiceImpl healthService = HealthServiceImpl.create(clock, properties);
+    private static Routes routes(
+        ApplicationConfiguration applicationConfiguration,
+        Properties properties,
+        BuildInformation buildInformation,
+        Clock clock
+    ) {
+        HealthServiceImpl healthService = new HealthServiceImpl(clock, properties, buildInformation);
 
         return new Routes(healthService);
     }

@@ -62,4 +62,4 @@
     state: absent
 
 - debug:
-    msg: Completed Docker image built app={{ app }}
+    msg: Completed Docker image built app={{ app }} tags=[{{ git_branch }}, {{ git_branch }}-{{ git_commit }}]

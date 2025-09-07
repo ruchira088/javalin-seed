@@ -46,7 +46,7 @@ tasks.register('buildInformation') {
         }
 
         def buildInfo =
-                """{
+            """{
                 "name": "javalin-seed",
                 "group": "${project.group}",
                 "version": "${project.version}",

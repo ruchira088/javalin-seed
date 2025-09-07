@@ -6,7 +6,7 @@ metadata:
 data:
   logback.xml: |
     <configuration scan="true" scanPeriod="10 seconds">
-        <contextListener class="com.ruchij.utils.BuildInfoLoggerContextListener" />
+        <contextListener class="com.ruchij.utils.ApiLoggerContextListener" />
         
         <appender name="STD_OUT" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>

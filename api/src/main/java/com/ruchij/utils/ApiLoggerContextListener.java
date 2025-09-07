@@ -7,7 +7,7 @@ import ch.qos.logback.classic.spi.LoggerContextListener;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import com.ruchij.service.health.models.BuildInformation;
 
-public class BuildInfoLoggerContextListener extends ContextAwareBase implements LoggerContextListener {
+public class ApiLoggerContextListener extends ContextAwareBase implements LoggerContextListener {
     @Override
     public boolean isResetResistant() {
         return true;

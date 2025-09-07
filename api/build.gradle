@@ -18,6 +18,7 @@ dependencies {
         "io.javalin:javalin-bundle:$javalinVersion",
         "com.typesafe:config:$typesafeConfigVersion",
         "ch.qos.logback:logback-classic:$logbackVersion",
+        "net.logstash.logback:logstash-logback-encoder:$logstashLogbackVersion",
         'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
     )
 

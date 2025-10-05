@@ -3,6 +3,9 @@
   connection: local
 
   tasks:
+    - set_fact:
+        domain: javalin-seed.home.ruchij.com
+
     - name: Install dependencies
       import_tasks: tasks/install-dependencies.yml
 
@@ -11,7 +14,6 @@
 
     - set_fact:
         namespace: "{{ 'javalin-seed' if git_branch == 'main' else 'javalin-seed-' + git_branch }}"
-        domain: javalin-seed.home.ruchij.com
         hostname: "{{ domain if git_branch == 'main' else git_branch + '.' + domain }}"
         ghcr_credentials: "{{ lookup('aws_ssm', '/github/ghcr/docker-config', region='ap-southeast-2') }}"
 

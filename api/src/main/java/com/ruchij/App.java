@@ -37,7 +37,7 @@ public class App {
     public static void run(ApplicationConfiguration applicationConfiguration) {
         Properties properties = System.getProperties();
         Clock clock = Clock.systemUTC();
-        BuildInformation buildInformation = BuildInformation.create();
+        BuildInformation buildInformation = BuildInformation.get();
 
         Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
 

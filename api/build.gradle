@@ -9,6 +9,11 @@ plugins {
 
 group = 'com.ruchij'
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 repositories {
     mavenCentral()
 }
@@ -37,34 +42,43 @@ application {
     ]
 }
 
-tasks.register('buildInformation') {
+def buildDirectory = layout.buildDirectory.dir("generated/src/main/java").get()
+
+tasks.register("generateBuildInfo") {
     doLast {
-        def file = new File("${getLayout().getProjectDirectory()}/build/resources/main/build-information.json")
-        file.parentFile.mkdirs()
+        def buildInfoDirectory = buildDirectory.dir("com/ruchij/build")
+        buildInfoDirectory.asFile.mkdirs()
 
-        if (file.exists()) {
-            file.delete()
-        }
+        def buildInfoFile = buildInfoDirectory.file("BuildInfo.java").asFile
 
-        def buildInfo =
-            """{
-                "name": "javalin-seed",
-                "group": "${project.group}",
-                "version": "${project.version}",
-                "gradleVersion": "${gradle.gradleVersion}",
-                "buildTimestamp": "${Instant.now()}",
-                "gitBranch": "${'git rev-parse --abbrev-ref HEAD'.execute().text.trim()}",
-                "gitCommit": "${'git rev-parse --short HEAD'.execute().text.trim()}"
-            }"""
+        buildInfoFile.text = """
+            package com.ruchij.build;
 
-        file.withWriter('UTF-8') { writer ->
-            writer.write(buildInfo)
-        }
+            import java.time.Instant;
+            
+            public final class BuildInfo {
+                public static final String APPLICATION_NAME = "javalin-seed";
+                public static final String APPLICATION_GROUP = "${project.group}";
+                public static final String APPLICATION_VERSION = "${project.version}";
+                public static final String GRADLE_VERSION = "${gradle.gradleVersion}";
+                public static final Instant BUILD_TIMESTAMP = Instant.parse("${Instant.now()}");
+                public static final String GIT_BRANCH = "${'git rev-parse --abbrev-ref HEAD'.execute().text.trim()}";
+                public static final String GIT_COMMIT = "${'git rev-parse --short HEAD'.execute().text.trim()}";
+            }
+        """.stripIndent()
     }
 }
 
-processResources {
-    dependsOn buildInformation
+compileJava {
+    dependsOn generateBuildInfo
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += buildDirectory
+        }
+    }
 }
 
 release {

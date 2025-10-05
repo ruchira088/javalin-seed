@@ -20,7 +20,7 @@
   import_tasks: tasks/install-dependencies.yml
 
 - name: Clean and build gradle project
-  shell: cd ../ && ./gradlew clean assemble && ./gradlew :{{ app }}:distTar
+  shell: cd ../ && ./gradlew clean && ./gradlew :{{ app }}:distTar
 
 - name: Generate the Dockerfile
   template:

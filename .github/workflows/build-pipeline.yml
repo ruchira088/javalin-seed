@@ -11,6 +11,7 @@ concurrency:
 
 jobs:
   compile-and-test:
+    name: Compile and test
     runs-on: ubuntu-latest
 
     steps:
@@ -40,7 +41,9 @@ jobs:
         run: ./gradlew test
 
   publish-docker-image:
+    name: Publish Docker image
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       id-token: write
@@ -84,11 +87,16 @@ jobs:
       - name: Build and publish Docker images
         run: ansible-playbook playbooks/build-and-publish-docker-images.yml
 
-  deploy-to-k8s:
+  deploy-to-dev:
+    name: Deploy to dev branch
     runs-on: ubuntu-latest
+
+    if: github.ref != 'refs/heads/main'
+
     permissions:
       contents: read
       id-token: write
+
     needs:
       - publish-docker-image
 
@@ -100,11 +108,67 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-region: ap-southeast-2
-          role-session-name: javalin-seed-deploy
+          role-session-name: javalin-seed-staging-deploy
           role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
 
-      - name: Deploy to K8s server
-        run: ansible-playbook -vvv playbooks/k8s-deploy.yml
+      - name: Deploy to staging
+        run: ansible-playbook -vvv playbooks/dev-deploy.yml
+
+  deploy-to-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    environment: Staging
+
+    if: github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    needs:
+      - publish-docker-image
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ap-southeast-2
+          role-session-name: javalin-seed-staging-deploy
+          role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
+
+      - name: Deploy to staging
+        run: ansible-playbook -vvv playbooks/staging-deploy.yml
+
+  deploy-to-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    environment: Production
+
+    if: github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    needs:
+      - deploy-to-staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ap-southeast-2
+          role-session-name: javalin-seed-production-deploy
+          role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
+
+      - name: Deploy to production
+        run: ansible-playbook -vvv playbooks/production-deploy.yml
 
   send-notification:
     runs-on: ubuntu-latest
@@ -116,7 +180,9 @@ jobs:
     needs:
       - compile-and-test
       - publish-docker-image
-      - deploy-to-k8s
+      - deploy-to-dev
+      - deploy-to-staging
+      - deploy-to-production
 
     steps:
       - name: Send Slack notification

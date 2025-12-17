@@ -1,0 +1,19 @@
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Gather git information
+      import_tasks: tasks/git-info.yml
+
+    - name: Set config values and secrets
+      import_tasks: tasks/configs-and-secrets.yml
+
+    - name: Set kube_config
+      import_tasks: tasks/k8s-config.yml
+
+    - name: Deploy to dev branch
+      import_tasks: tasks/k8s-deploy.yml
+      vars:
+        namespace: javalin-seed-{{ git_branch }}
+        hostname: {{ git_branch }}.javalin-seed.home.ruchij.com

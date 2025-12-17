@@ -27,7 +27,7 @@
     src: docker/{{ dockerfile }}
     dest: output/Dockerfile-{{ app }}
   vars:
-    build_timestamp: "{{ ansible_date_time.iso8601 }}"
+    build_timestamp: "{{ ansible_facts['date_time']['iso8601'] }}"
 
 - name: Build Docker image
   when: not publish

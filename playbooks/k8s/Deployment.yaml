@@ -24,6 +24,9 @@ spec:
             - secretRef:
                 name: javalin-seed-secrets
           readinessProbe:
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
             httpGet:
               port: javalin-port
               path: /service/info
@@ -31,6 +34,9 @@ spec:
                 - name: X-Correlation-ID
                   value: k8s-readiness-probe
           livenessProbe:
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
             httpGet:
               port: javalin-port
               path: /service/info
@@ -38,7 +44,8 @@ spec:
                 - name: X-Correlation-ID
                   value: k8s-liveness-probe
           startupProbe:
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 5
             httpGet:
               port: javalin-port

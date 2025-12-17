@@ -2,11 +2,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: javalin-seed-service
-  namespace: {{ namespace }}
+  namespace: "{{ namespace }}"
 spec:
   selector:
     app: javalin-seed
-    branch: {{ git_branch }}
+    branch: "{{ git_branch }}"
   ports:
     - name: javalin-port
       port: 8080

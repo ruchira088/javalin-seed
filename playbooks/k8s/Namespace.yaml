@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ namespace }}
+  name: "{{ namespace }}"
   labels:
     project: javalin-seed
-    branch: {{ git_branch }}
+    branch: "{{ git_branch }}"

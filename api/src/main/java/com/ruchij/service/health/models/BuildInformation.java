@@ -7,7 +7,6 @@ import java.time.Instant;
 public record BuildInformation(
     String name,
     String group,
-    String version,
     String gradleVersion,
     Instant buildTimestamp,
     String gitBranch,
@@ -17,7 +16,6 @@ public record BuildInformation(
         return new BuildInformation(
             BuildInfo.APPLICATION_NAME,
             BuildInfo.APPLICATION_GROUP,
-            BuildInfo.APPLICATION_VERSION,
             BuildInfo.GRADLE_VERSION,
             BuildInfo.BUILD_TIMESTAMP,
             BuildInfo.GIT_BRANCH,

@@ -2,14 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: javalin-seed-ingress
-  namespace: {{ namespace }}
+  namespace: "{{ namespace }}"
 spec:
   tls:
     - secretName: javalin-seed-tls
       hosts:
-        - {{ hostname }}
+        - "{{ hostname }}"
   rules:
-    - host: {{ hostname }}
+    - host: "{{ hostname }}"
       http:
         paths:
           - pathType: ImplementationSpecific

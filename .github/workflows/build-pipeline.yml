@@ -111,7 +111,7 @@ jobs:
           role-session-name: javalin-seed-staging-deploy
           role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
 
-      - name: Deploy to staging
+      - name: Deploy to dev
         run: ansible-playbook -vvv playbooks/dev-deploy.yml
 
   deploy-to-staging:

@@ -15,5 +15,5 @@
     - name: Deploy to dev branch
       import_tasks: tasks/k8s-deploy.yml
       vars:
-        namespace: javalin-seed-{{ git_branch }}
-        hostname: {{ git_branch }}.javalin-seed.home.ruchij.com
+        namespace: "javalin-seed-{{ git_branch }}"
+        hostname: "{{ git_branch }}.javalin-seed.home.ruchij.com"

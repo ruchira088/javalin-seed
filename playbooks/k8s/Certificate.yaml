@@ -2,11 +2,11 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: javalin-seed-certificate
-  namespace: {{ namespace }}
+  namespace: "{{ namespace }}"
 spec:
   secretName: javalin-seed-tls
   issuerRef:
     kind: ClusterIssuer
     name: lets-encrypt
   dnsNames:
-    - {{ hostname }}
+    - "{{ hostname }}"

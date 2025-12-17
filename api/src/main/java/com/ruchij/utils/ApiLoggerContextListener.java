@@ -17,7 +17,6 @@ public class ApiLoggerContextListener extends ContextAwareBase implements Logger
     public void onStart(LoggerContext context) {
         BuildInformation buildInformation = BuildInformation.get();
         context.putProperty("app.name", buildInformation.name());
-        context.putProperty("app.version", buildInformation.version());
         context.putProperty("git.branch", buildInformation.gitBranch());
         context.putProperty("git.commit", buildInformation.gitCommit());
 

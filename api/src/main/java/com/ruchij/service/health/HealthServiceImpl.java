@@ -28,7 +28,6 @@ public class HealthServiceImpl implements HealthService {
 
         ServiceInformation serviceInformation = new ServiceInformation(
             buildInformation.name(),
-            buildInformation.version(),
             javaVersion,
             buildInformation.gradleVersion(),
             timestamp,

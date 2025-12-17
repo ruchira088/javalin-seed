@@ -2,22 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: javalin-seed-deployment
-  namespace: {{ namespace }}
+  namespace: "{{ namespace }}"
 spec:
   selector:
     matchLabels:
       app: javalin-seed
-      branch: {{ git_branch }}
+      branch: "{{ git_branch }}"
   replicas: 1
   template:
     metadata:
       labels:
         app: javalin-seed
-        branch: {{ git_branch }}
+        branch: "{{ git_branch }}"
     spec:
       containers:
         - name: javalin-seed-api-container
-          image: ghcr.io/ruchira088/javalin-seed-api:{{ git_branch }}-{{ git_commit }}
+          image: "ghcr.io/ruchira088/javalin-seed-api:{{ git_branch }}-{{ git_commit }}"
           envFrom:
             - configMapRef:
                 name: javalin-seed-data-config-map

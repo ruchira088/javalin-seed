@@ -3,7 +3,6 @@ import java.time.Instant
 plugins {
     id 'application'
     id 'com.github.ben-manes.versions' version "$dependencyUpdatesPluginVersion"
-    id 'net.researchgate.release' version "$releasePluginVersion"
     id 'jacoco'
 }
 
@@ -59,7 +58,6 @@ tasks.register("generateBuildInfo") {
             public final class BuildInfo {
                 public static final String APPLICATION_NAME = "javalin-seed";
                 public static final String APPLICATION_GROUP = "${project.group}";
-                public static final String APPLICATION_VERSION = "${project.version}";
                 public static final String GRADLE_VERSION = "${gradle.gradleVersion}";
                 public static final Instant BUILD_TIMESTAMP = Instant.parse("${Instant.now()}");
                 public static final String GIT_BRANCH = "${'git rev-parse --abbrev-ref HEAD'.execute().text.trim()}";
@@ -78,16 +76,6 @@ sourceSets {
         java {
             srcDirs += buildDirectory
         }
-    }
-}
-
-release {
-    preTagCommitMessage = 'Setting release version: '
-    newVersionCommitMessage = 'Setting development version: '
-    pushReleaseVersionBranch = 'main'
-
-    git {
-        requireBranch.set('dev')
     }
 }
 

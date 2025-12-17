@@ -25,7 +25,6 @@ class ServiceRouteTest {
         Mockito.when(healthService.serviceInformation())
             .thenReturn(new ServiceInformation(
                 "javalin-seed",
-                "0.0.1-SNAPSHOT",
                 "17.0.5",
                 "7.6",
                 timestamp,
@@ -43,7 +42,6 @@ class ServiceRouteTest {
             String expectedResponseBody = """
                 {
                     "serviceName": "javalin-seed",
-                    "serviceVersion": "0.0.1-SNAPSHOT",
                     "javaVersion": "17.0.5",
                     "gradleVersion": "7.6",
                     "currentTimestamp": "2023-02-05T04:37:42.566735Z",

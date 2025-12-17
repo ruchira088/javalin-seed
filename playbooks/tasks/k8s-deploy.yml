@@ -1,9 +1,5 @@
-- name: Install pip dependencies
-  pip:
-    name:
-      - boto3
-      - botocore
-      - kubernetes
+- name: Install dependencies
+  import_tasks: tasks/install-dependencies.yml
 
 - name: Gather git information
   import_tasks: tasks/git-info.yml
@@ -11,8 +7,35 @@
 - set_fact:
     ghcr_credentials: "{{ lookup('aws_ssm', '/github/ghcr/docker-config', region='ap-southeast-2') }}"
 
+- name: Create output directory
+  block:
+    - name: Delete existing output directory
+      file:
+        path: k8s-output
+        state: absent
+
+    - name: Create directory
+      file:
+        path: k8s-output
+        state: directory
+
+- name: Setup K8s config
+  block:
+    - name: Set kubeconfig file location
+      set_fact:
+        kubeconfig: k8s-output/kubeconfig
+
+    - name: Create K8s config file
+      copy:
+        dest: "{{ kubeconfig }}"
+        content: "{{ lookup('aws_ssm', aws_ssm_k8s_config, region='ap-southeast-2') }}"
+
 - name: Render K8s resource files
-  import_tasks: tasks/k8s-resource-files.yml
+  template:
+    src: "{{ item }}"
+    dest: k8s-output/{{ item | basename }}
+  with_fileglob:
+    - k8s/*.yaml
 
 - name: Deploy K8s resources
   block:
@@ -35,7 +58,7 @@
       command: kubectl apply -f k8s-output --kubeconfig {{ kubeconfig }}
 
     - name: Wait for successful deployment
-      command: kubectl rollout status deployment javalin-seed-deployment --kubeconfig {{ kubeconfig }} -n {{ namespace }}
+      command: kubectl rollout status deployment javalin-seed-deployment --kubeconfig {{ kubeconfig }} -n {{ k8s_namespace }}
 
 - name: Clean up output directory
   file:

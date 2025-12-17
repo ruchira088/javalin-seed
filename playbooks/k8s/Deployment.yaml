@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: javalin-seed-deployment
-  namespace: "{{ namespace }}"
+  namespace: "{{ k8s_namespace }}"
 spec:
   selector:
     matchLabels:

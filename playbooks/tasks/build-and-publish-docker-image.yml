@@ -1,6 +1,9 @@
 - debug:
     msg: Building Docker image app={{ app }} publish={{ publish }}
 
+- name: Install dependencies
+  import_tasks: tasks/install-dependencies.yml
+
 - name: Setup output directory
   block:
     - name: Delete existing output directory
@@ -15,12 +18,6 @@
 
 - name: Gather git information
   import_tasks: tasks/git-info.yml
-
-- name: Install pip dependencies
-  pip:
-    name:
-      - boto3
-      - botocore
 
 - name: Clean and build gradle project
   shell: cd ../ && ./gradlew clean && ./gradlew :{{ app }}:distTar

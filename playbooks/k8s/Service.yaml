@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: javalin-seed-service
-  namespace: "{{ namespace }}"
+  namespace: "{{ k8s_namespace }}"
 spec:
   selector:
     app: javalin-seed

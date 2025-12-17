@@ -1,0 +1,9 @@
+- name: Install pip dependencies
+  pip:
+    virtualenv: "{{ playbook_dir }}/.venv"
+    virtualenv_command: python3 -m venv
+    virtualenv_site_packages: false
+    name:
+      - boto3
+      - botocore
+      - kubernetes

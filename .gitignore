@@ -4,5 +4,6 @@ build
 .idea
 
 .venv
+k8s-output
 
 .DS_Store

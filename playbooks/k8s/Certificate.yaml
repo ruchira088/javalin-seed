@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: javalin-seed-certificate
-  namespace: "{{ namespace }}"
+  namespace: "{{ k8s_namespace }}"
 spec:
   secretName: javalin-seed-tls
   issuerRef:

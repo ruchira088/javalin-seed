@@ -4,14 +4,12 @@
 
   tasks:
     - set_fact:
-        namespace: javalin-seed
+        k8s_namespace: javalin-seed
         hostname: javalin-seed.home.ruchij.com
+        aws_ssm_k8s_config: /infrastructure/prod/k8s/config
 
     - name: Set config values and secrets
       import_tasks: tasks/configs-and-secrets.yml
-
-    - name: Set kube_config
-      import_tasks: tasks/k8s-config.yml
 
     - name: Deploy to production
       import_tasks: tasks/k8s-deploy.yml

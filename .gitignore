@@ -3,4 +3,6 @@ build
 
 .idea
 
+.venv
+
 .DS_Store

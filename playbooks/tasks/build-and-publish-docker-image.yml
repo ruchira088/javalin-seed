@@ -16,8 +16,11 @@
 - name: Gather git information
   import_tasks: tasks/git-info.yml
 
-- name: Install dependencies
-  import_tasks: tasks/install-dependencies.yml
+- name: Install pip dependencies
+  pip:
+    name:
+      - boto3
+      - botocore
 
 - name: Clean and build gradle project
   shell: cd ../ && ./gradlew clean && ./gradlew :{{ app }}:distTar

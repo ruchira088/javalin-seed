@@ -1,5 +1,9 @@
-- name: Install dependencies
-  import_tasks: tasks/install-dependencies.yml
+- name: Install pip dependencies
+  pip:
+    name:
+      - boto3
+      - botocore
+      - kubernetes
 
 - name: Gather git information
   import_tasks: tasks/git-info.yml

@@ -7,11 +7,11 @@
         namespace: javalin-seed
         hostname: javalin-seed.home.ruchij.com
 
-    - name: Set kube_config
-      import_tasks: tasks/k8s-config.yml
-
     - name: Set config values and secrets
       import_tasks: tasks/configs-and-secrets.yml
+
+    - name: Set kube_config
+      import_tasks: tasks/k8s-config.yml
 
     - name: Deploy to production
       import_tasks: tasks/k8s-deploy.yml

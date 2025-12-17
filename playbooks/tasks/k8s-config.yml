@@ -3,6 +3,12 @@
     path: k8s-output
     state: directory
 
+- name: Install pip dependencies
+  pip:
+    name:
+      - boto3
+      - botocore
+
 - name: Set kubeconfig file location
   set_fact:
     kubeconfig: k8s-output/kubeconfig

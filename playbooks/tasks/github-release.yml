@@ -40,5 +40,5 @@
       name: "{{ tag_name }}"
       draft: false
       generate_release_notes: true
-      make_latest: true
+      make_latest: "true"
 

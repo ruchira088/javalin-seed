@@ -6,16 +6,6 @@
   shell: git rev-parse --abbrev-ref HEAD | tr "[:upper:]" "[:lower:]" | tr " /" "-"
   register: git_branch_output
 
-- name: Get GitHub user
-  shell: git remote get-url origin | sed -n 's/.*:\(.*\)\/.*\.git/\1/p'
-  register: github_user_output
-
-- name: Get GitHub repo
-  shell: git remote get-url origin | sed -n 's/.*\/\(.*\)\.git/\1/p'
-  register: github_repo_output
-
 - set_fact:
     git_commit: "{{ git_commit_output.stdout }}"
     git_branch: "{{ git_branch_output.stdout }}"
-    github_user: "{{ github_user_output.stdout }}"
-    github_repo: "{{ github_repo_output.stdout }}"

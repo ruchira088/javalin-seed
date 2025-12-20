@@ -4,15 +4,29 @@
 - name: Install dependencies
   import_tasks: tasks/install-dependencies.yml
 
+- name: Set GitHub repo
+  block:
+    - name: Set GitHub repo in CI
+      when: lookup('env', 'CI') | lower == 'true'
+      set_fact:
+        github_repo: "{{ lookup('env', 'GITHUB_REPOSITORY') }}"
+
+    - name: Set GitHub repo locally
+      when: lookup('env', 'CI') | lower != 'true'
+      block:
+        - name: Get GitHub repo
+          shell: git remote get-url origin | sed 's/.*:\(.*\)\.git/\1/'
+          register: github_repo_output
+
+        - set_fact:
+            github_repo: "{{ github_repo_output.stdout }}"
+
 - set_fact:
     tag_name: "{{ ansible_facts['date_time']['date'] }}.{{ git_commit }}"
 
-- debug:
-    msg: "Tag name: {{ tag_name }}"
-
 - name: Generate release notes
   uri:
-    url: https://api.github.com/repos/{{ github_user }}/{{ github_repo }}/releases
+    url: https://api.github.com/repos/{{ github_repo }}/releases
     method: POST
     body_format: json
     status_code: 201

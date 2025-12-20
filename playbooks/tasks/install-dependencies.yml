@@ -18,4 +18,3 @@
       when: lookup('env', 'CI') | lower == 'true'
       pip:
         name: "{{ pip_dependencies }}"
-

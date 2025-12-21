@@ -6,14 +6,17 @@
 
 - name: Setup output directory
   block:
+    - set_fact:
+        docker_output_dir: .docker-output
+
     - name: Delete existing output directory
       file:
-        path: output
+        path: "{{ docker_output_dir }}"
         state: absent
 
     - name: Create main output directory
       file:
-        path: output
+        path: "{{ docker_output_dir }}"
         state: directory
 
 - name: Gather git information
@@ -25,7 +28,7 @@
 - name: Generate the Dockerfile
   template:
     src: docker/{{ dockerfile }}
-    dest: output/Dockerfile-{{ app }}
+    dest: "{{ docker_output_dir }}/Dockerfile-{{ app }}"
   vars:
     build_timestamp: "{{ ansible_facts['date_time']['iso8601'] }}"
 
@@ -35,7 +38,7 @@
     docker build \
       -t ghcr.io/ruchira088/javalin-seed-{{ app }}:{{ git_branch }} \
       -t ghcr.io/ruchira088/javalin-seed-{{ app }}:{{ git_branch }}-{{ git_commit }} \
-      -f output/Dockerfile-{{ app }} \
+      -f {{ docker_output_dir }}/Dockerfile-{{ app }} \
       ../{{ app }}/build/distributions/
 
 - name: Build and publish Docker image to GitHub container registry
@@ -53,12 +56,12 @@
           --platform linux/arm64,linux/amd64 \
           -t ghcr.io/ruchira088/javalin-seed-{{ app }}:{{ git_branch }} \
           -t ghcr.io/ruchira088/javalin-seed-{{ app }}:{{ git_branch }}-{{ git_commit }} \
-          -f output/Dockerfile-{{ app }} \
+          -f {{ docker_output_dir }}/Dockerfile-{{ app }} \
           ../{{ app }}/build/distributions/
 
 - name: Cleanup output directory
   file:
-    path: output
+    path: "{{ docker_output_dir }}"
     state: absent
 
 - debug:

@@ -11,8 +11,8 @@
     - name: Set config values and secrets
       import_tasks: tasks/configs-and-secrets.yml
 
-    - name: Create GitHub release
-      import_tasks: tasks/github-release.yml
-
     - name: Deploy to production
       import_tasks: tasks/k8s-deploy.yml
+
+    - name: Create GitHub release
+      import_tasks: tasks/github-release.yml

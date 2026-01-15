@@ -81,6 +81,7 @@ sourceSets {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
 }
 
 distTar {
@@ -89,4 +90,8 @@ distTar {
 
 jacocoTestReport {
     dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }

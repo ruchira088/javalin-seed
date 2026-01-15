@@ -58,8 +58,8 @@ jobs:
         with:
           jacoco-csv-file: api/build/reports/jacoco/test/jacocoTestReport.csv
           generate-summary: true
-          generate-coverage-badge: false
-          generate-branches-badge: false
+          generate-coverage-badge: true
+          generate-branches-badge: true
 
       - name: Upload test report
         uses: actions/upload-artifact@v4

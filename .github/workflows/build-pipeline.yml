@@ -53,13 +53,58 @@ jobs:
           reporter: java-junit
 
       - name: Coverage summary
-        uses: cicirello/jacoco-badge-generator@v2
         if: success() || failure()
-        with:
-          jacoco-csv-file: api/build/reports/jacoco/test/jacocoTestReport.csv
-          generate-summary: true
-          generate-coverage-badge: true
-          generate-branches-badge: true
+        run: |
+          python3 << 'EOF'
+          import xml.etree.ElementTree as ET
+          import os
+
+          report_path = "api/build/reports/jacoco/test/jacocoTestReport.xml"
+          if not os.path.exists(report_path):
+              exit(0)
+
+          tree = ET.parse(report_path)
+          root = tree.getroot()
+
+          metrics = {}
+          for counter in root.findall("counter"):
+              covered = int(counter.get("covered"))
+              missed = int(counter.get("missed"))
+              total = covered + missed
+              pct = (covered * 100 // total) if total > 0 else 100
+              metrics[counter.get("type")] = {"covered": covered, "total": total, "pct": pct}
+
+          def progress_bar(pct):
+              filled = int(pct / 10)
+              empty = 10 - filled
+              return "🟩" * filled + "⬜" * empty
+
+          def status_emoji(pct):
+              if pct >= 90: return "🏆"
+              if pct >= 80: return "✅"
+              if pct >= 70: return "🔶"
+              return "❌"
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("## 📊 Code Coverage Report\n\n")
+
+              line_pct = metrics.get("LINE", {}).get("pct", 0)
+              overall_status = "🎉 Excellent!" if line_pct >= 90 else "👍 Good" if line_pct >= 80 else "⚠️ Needs improvement"
+              f.write(f"**Overall: {overall_status}**\n\n")
+
+              f.write("| Metric | Coverage | Progress | Status |\n")
+              f.write("|--------|----------|----------|--------|\n")
+
+              icons = {"LINE": "📝", "INSTRUCTION": "⚙️", "BRANCH": "🔀"}
+              labels = {"LINE": "Lines", "INSTRUCTION": "Instructions", "BRANCH": "Branches"}
+
+              for name in ["LINE", "INSTRUCTION", "BRANCH"]:
+                  if name in metrics:
+                      m = metrics[name]
+                      icon = icons[name]
+                      label = labels[name]
+                      f.write(f"| {icon} {label} | **{m['pct']}%** ({m['covered']}/{m['total']}) | {progress_bar(m['pct'])} | {status_emoji(m['pct'])} |\n")
+          EOF
 
       - name: Upload test report
         uses: actions/upload-artifact@v4

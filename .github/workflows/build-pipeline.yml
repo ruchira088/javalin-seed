@@ -17,6 +17,7 @@ jobs:
     permissions:
       contents: read
       checks: write
+      id-token: write
 
     steps:
       - name: Checkout code
@@ -38,6 +39,13 @@ jobs:
             ${{ runner.os }}-${{ hashFiles('**/gradle-wrapper.properties') }}
             ${{ runner.os }}
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-region: ap-southeast-2
+          role-session-name: javalin-seed-compile-and-test
+          role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
+
       - name: Assemble
         run: ./gradlew assemble
 
@@ -45,9 +53,10 @@ jobs:
         run: ./gradlew check
 
       - name: Dependency vulnerability scan
-        run: ./gradlew dependencyCheckAnalyze
-        env:
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          NVD_API_KEY=$(aws secretsmanager get-secret-value --secret-id NVD-API-KEY --region ap-southeast-2 --query SecretString --output text)
+          export NVD_API_KEY
+          ./gradlew dependencyCheckAnalyze
 
       - name: Publish test results
         uses: dorny/test-reporter@v2

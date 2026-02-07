@@ -15,6 +15,7 @@ import okhttp3.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.time.Instant;
 import java.util.List;
@@ -126,14 +127,8 @@ class AppTest {
         Thread serverThread = new Thread(() -> App.run(config));
         serverThread.start();
 
-        Thread.sleep(2000);
-
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-            .url("http://127.0.0.1:" + port + "/service/info")
-            .build();
-
-        try (Response response = client.newCall(request).execute()) {
+        String url = "http://127.0.0.1:" + port + "/service/info";
+        try (Response response = waitForServer(url)) {
             assertEquals(200, response.code());
             JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(
                 Objects.requireNonNull(response.body()).byteStream()
@@ -149,20 +144,30 @@ class AppTest {
         mainThread.setDaemon(true);
         mainThread.start();
 
-        Thread.sleep(2000);
-
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-            .url("http://127.0.0.1:19999/service/info")
-            .build();
-
-        try (Response response = client.newCall(request).execute()) {
+        String url = "http://127.0.0.1:19999/service/info";
+        try (Response response = waitForServer(url)) {
             assertEquals(200, response.code());
             JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(
                 Objects.requireNonNull(response.body()).byteStream()
             );
             assertEquals("javalin-seed", json.get("serviceName").asText());
         }
+    }
+
+    private static Response waitForServer(String url) throws Exception {
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url(url).build();
+
+        int maxAttempts = 20;
+        for (int i = 0; i < maxAttempts; i++) {
+            try {
+                return client.newCall(request).execute();
+            } catch (IOException e) {
+                Thread.sleep(500);
+            }
+        }
+
+        return client.newCall(request).execute();
     }
 
     private static int findAvailablePort() throws Exception {

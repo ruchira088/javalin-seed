@@ -57,7 +57,7 @@ public class App {
     public static Javalin javalin(Routes routes, List<String> allowedOrigins) {
         return Javalin.create(javalinConfig -> {
             javalinConfig.useVirtualThreads = true;
-            javalinConfig.jsonMapper(new JavalinJackson(JsonUtils.objectMapper, true));
+            javalinConfig.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true));
 
             // wait 7 seconds for existing requests to finish
             javalinConfig.jetty.modifyServer(server -> server.setStopTimeout(7_000));

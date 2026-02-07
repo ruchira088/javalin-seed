@@ -41,8 +41,13 @@ jobs:
       - name: Assemble
         run: ./gradlew assemble
 
-      - name: Execute test suite
-        run: ./gradlew test
+      - name: Static analysis and tests
+        run: ./gradlew check
+
+      - name: Dependency vulnerability scan
+        run: ./gradlew dependencyCheckAnalyze
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
       - name: Publish test results
         uses: dorny/test-reporter@v2
@@ -119,6 +124,22 @@ jobs:
         with:
           name: coverage-report
           path: api/build/reports/jacoco/test/html/
+
+      - name: Upload static analysis reports
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: static-analysis-reports
+          path: |
+            api/build/reports/checkstyle/
+            api/build/reports/spotbugs/
+
+      - name: Upload dependency check report
+        uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: dependency-check-report
+          path: api/build/reports/dependency-check-report.*
 
   publish-docker-image:
     name: Publish Docker image

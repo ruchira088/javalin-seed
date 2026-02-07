@@ -4,6 +4,9 @@ plugins {
     id 'application'
     id 'com.github.ben-manes.versions' version "$dependencyUpdatesPluginVersion"
     id 'jacoco'
+    id 'checkstyle'
+    id 'com.github.spotbugs' version "$spotbugsPluginVersion"
+    id 'org.owasp.dependencycheck' version "$owaspDependencyCheckVersion"
 }
 
 group = 'com.ruchij'
@@ -94,5 +97,30 @@ jacocoTestReport {
         xml.required = true
         csv.required = true
         html.required = true
+    }
+}
+
+checkstyle {
+    toolVersion = checkstyleVersion
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+}
+
+spotbugs {
+    excludeFilter = rootProject.file('config/spotbugs/exclude.xml')
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7.0f
+    formats = ['HTML', 'JSON']
+
+    nvd {
+        apiKey = System.getenv('NVD_API_KEY') ?: ''
     }
 }

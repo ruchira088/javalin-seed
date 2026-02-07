@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude generated build info class -->
+    <Match>
+        <Class name="com.ruchij.build.BuildInfo"/>
+    </Match>
+
+    <!-- Java Records and DI constructors: SpotBugs flags List fields as mutable,
+         but toList() and List.of() produce unmodifiable lists -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Or>
+            <Class name="com.ruchij.config.HttpConfiguration"/>
+            <Class name="com.ruchij.web.Routes"/>
+            <Class name="com.ruchij.service.health.HealthServiceImpl"/>
+        </Or>
+    </Match>
+</FindBugsFilter>

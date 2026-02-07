@@ -15,7 +15,7 @@ class JsonUtilsTest {
     void shouldSerializeInstantToIsoString() throws JsonProcessingException {
         Instant instant = Instant.parse("2024-01-15T10:30:00Z");
 
-        String json = JsonUtils.objectMapper.writeValueAsString(instant);
+        String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(instant);
 
         assertEquals("\"2024-01-15T10:30:00Z\"", json);
     }
@@ -24,7 +24,7 @@ class JsonUtilsTest {
     void shouldDeserializeIsoStringToInstant() throws JsonProcessingException {
         String json = "\"2024-01-15T10:30:00.123456Z\"";
 
-        Instant instant = JsonUtils.objectMapper.readValue(json, Instant.class);
+        Instant instant = JsonUtils.OBJECT_MAPPER.readValue(json, Instant.class);
 
         assertEquals(Instant.parse("2024-01-15T10:30:00.123456Z"), instant);
     }
@@ -33,8 +33,8 @@ class JsonUtilsTest {
     void shouldHandleInstantWithNanoseconds() throws JsonProcessingException {
         Instant instant = Instant.parse("2024-01-15T10:30:00.123456789Z");
 
-        String json = JsonUtils.objectMapper.writeValueAsString(instant);
-        Instant deserialized = JsonUtils.objectMapper.readValue(json, Instant.class);
+        String json = JsonUtils.OBJECT_MAPPER.writeValueAsString(instant);
+        Instant deserialized = JsonUtils.OBJECT_MAPPER.readValue(json, Instant.class);
 
         assertEquals(instant, deserialized);
     }
@@ -47,7 +47,7 @@ class JsonUtilsTest {
         Instant instant = Instant.parse("2024-01-15T10:30:00Z");
         TestRecord record = new TestRecord("test", instant);
 
-        JsonNode json = JsonUtils.objectMapper.valueToTree(record);
+        JsonNode json = JsonUtils.OBJECT_MAPPER.valueToTree(record);
 
         String expectedJson = """
                 {
@@ -56,7 +56,7 @@ class JsonUtilsTest {
                 }
             """;
 
-        assertEquals(JsonUtils.objectMapper.readTree(expectedJson), json);
+        assertEquals(JsonUtils.OBJECT_MAPPER.readTree(expectedJson), json);
     }
 
     @Test
@@ -71,7 +71,7 @@ class JsonUtilsTest {
             }
             """;
 
-        TestRecord record = JsonUtils.objectMapper.readValue(json, TestRecord.class);
+        TestRecord record = JsonUtils.OBJECT_MAPPER.readValue(json, TestRecord.class);
 
         assertEquals(new TestRecord("test", Instant.parse("2024-01-15T10:30:00Z")), record);
     }
@@ -82,7 +82,7 @@ class JsonUtilsTest {
         }
 
         TestRecord withValue = new TestRecord(Optional.of("present"));
-        JsonNode jsonWithValue = JsonUtils.objectMapper.valueToTree(withValue);
+        JsonNode jsonWithValue = JsonUtils.OBJECT_MAPPER.valueToTree(withValue);
 
         String expectedJsonWithValue = """
             {
@@ -90,10 +90,10 @@ class JsonUtilsTest {
             }
             """;
 
-        assertEquals(JsonUtils.objectMapper.readTree(expectedJsonWithValue), jsonWithValue);
+        assertEquals(JsonUtils.OBJECT_MAPPER.readTree(expectedJsonWithValue), jsonWithValue);
 
         TestRecord withoutValue = new TestRecord(Optional.empty());
-        JsonNode jsonWithoutValue = JsonUtils.objectMapper.valueToTree(withoutValue);
+        JsonNode jsonWithoutValue = JsonUtils.OBJECT_MAPPER.valueToTree(withoutValue);
 
         String expectedJsonWithoutValue = """
             {
@@ -101,6 +101,6 @@ class JsonUtilsTest {
             }
             """;
 
-        assertEquals(JsonUtils.objectMapper.readTree(expectedJsonWithoutValue), jsonWithoutValue);
+        assertEquals(JsonUtils.OBJECT_MAPPER.readTree(expectedJsonWithoutValue), jsonWithoutValue);
     }
 }

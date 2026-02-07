@@ -12,7 +12,7 @@ import org.mockito.Mockito;
 import java.time.Instant;
 import java.util.List;
 
-import static com.ruchij.utils.JsonUtils.objectMapper;
+import static com.ruchij.utils.JsonUtils.OBJECT_MAPPER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ServiceRouteTest {
@@ -52,10 +52,9 @@ class ServiceRouteTest {
                 """;
 
             assertEquals(
-                objectMapper.readTree(expectedResponseBody),
-                objectMapper.readTree(response.body().byteStream())
+                OBJECT_MAPPER.readTree(expectedResponseBody),
+                OBJECT_MAPPER.readTree(response.body().byteStream())
             );
         }));
     }
-
 }

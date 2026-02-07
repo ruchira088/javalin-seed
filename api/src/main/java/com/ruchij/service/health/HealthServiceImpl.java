@@ -2,10 +2,7 @@ package com.ruchij.service.health;
 
 import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.service.health.models.ServiceInformation;
-import com.ruchij.utils.JsonUtils;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Properties;

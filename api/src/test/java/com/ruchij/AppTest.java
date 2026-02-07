@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import java.net.ServerSocket;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -63,7 +64,7 @@ class AppTest {
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/service/info");
-            JsonNode json = JsonUtils.objectMapper.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream());
             assertNotNull(json.get("serviceName"));
             assertEquals("test-app", json.get("serviceName").asText());
         });
@@ -83,7 +84,7 @@ class AppTest {
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/service/info");
-            JsonNode json = JsonUtils.objectMapper.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream());
             assertEquals("2024-01-15T10:30:00Z", json.get("currentTimestamp").asText());
             assertEquals("2024-01-15T10:30:00Z", json.get("buildTimestamp").asText());
         });
@@ -108,7 +109,9 @@ class AppTest {
 
         try (Response response = client.newCall(request).execute()) {
             assertEquals(200, response.code());
-            JsonNode json = JsonUtils.objectMapper.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(
+                Objects.requireNonNull(response.body()).byteStream()
+            );
             assertNotNull(json.get("serviceName"));
             assertEquals("javalin-seed", json.get("serviceName").asText());
         }
@@ -129,7 +132,9 @@ class AppTest {
 
         try (Response response = client.newCall(request).execute()) {
             assertEquals(200, response.code());
-            JsonNode json = JsonUtils.objectMapper.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(
+                Objects.requireNonNull(response.body()).byteStream()
+            );
             assertEquals("javalin-seed", json.get("serviceName").asText());
         }
     }

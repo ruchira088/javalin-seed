@@ -5,8 +5,6 @@ import com.ruchij.service.health.models.ServiceInformation;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.HttpStatus;
 
-import java.util.concurrent.CompletableFuture;
-
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 

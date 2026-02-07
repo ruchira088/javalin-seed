@@ -45,7 +45,7 @@ class ServiceInformationTest {
             timestamp
         );
 
-        JsonNode json = JsonUtils.objectMapper.valueToTree(info);
+        JsonNode json = JsonUtils.OBJECT_MAPPER.valueToTree(info);
 
         assertEquals("test-service", json.get("serviceName").asText());
         assertEquals("21", json.get("javaVersion").asText());

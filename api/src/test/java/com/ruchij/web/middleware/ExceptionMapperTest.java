@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ExceptionMapperTest {
 
     private Javalin createApp() {
-        Javalin app = Javalin.create(config -> config.jsonMapper(new JavalinJackson(JsonUtils.objectMapper, true)));
+        Javalin app = Javalin.create(config -> config.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true)));
         ExceptionMapper.handle(app);
         return app;
     }
@@ -44,8 +44,8 @@ class ExceptionMapperTest {
                 {"error":"Invalid input provided"}
                 """;
             assertEquals(
-                JsonUtils.objectMapper.readTree(expectedBody),
-                JsonUtils.objectMapper.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
             );
         });
     }
@@ -65,8 +65,8 @@ class ExceptionMapperTest {
                 {"error":"User not found"}
                 """;
             assertEquals(
-                JsonUtils.objectMapper.readTree(expectedBody),
-                JsonUtils.objectMapper.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
             );
         });
     }
@@ -86,8 +86,8 @@ class ExceptionMapperTest {
                 {"error":"Resource already exists"}
                 """;
             assertEquals(
-                JsonUtils.objectMapper.readTree(expectedBody),
-                JsonUtils.objectMapper.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
             );
         });
     }
@@ -107,8 +107,8 @@ class ExceptionMapperTest {
                 {"error":"Unexpected error"}
                 """;
             assertEquals(
-                JsonUtils.objectMapper.readTree(expectedBody),
-                JsonUtils.objectMapper.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
             );
         });
     }
@@ -133,8 +133,8 @@ class ExceptionMapperTest {
                 {"error":"No matching routes were found for GET /non-existing-route"}
                 """;
             assertEquals(
-                JsonUtils.objectMapper.readTree(expectedBody),
-                JsonUtils.objectMapper.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
             );
         });
     }

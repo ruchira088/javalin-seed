@@ -2,7 +2,11 @@ package com.ruchij.utils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
@@ -10,7 +14,7 @@ import java.io.IOException;
 import java.time.Instant;
 
 public class JsonUtils {
-    public static final ObjectMapper objectMapper = objectMapper();
+    public static final ObjectMapper OBJECT_MAPPER = objectMapper();
 
     private static ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();

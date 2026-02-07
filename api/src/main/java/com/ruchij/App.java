@@ -9,6 +9,8 @@ import com.ruchij.web.middleware.ExceptionMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.javalin.Javalin;
+import io.javalin.openapi.plugin.OpenApiPlugin;
+import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import io.javalin.json.JavalinJackson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +72,22 @@ public class App {
                     rule.allowCredentials = true;
                 });
             });
+
+            javalinConfig.registerPlugin(new OpenApiPlugin(openApiConfig ->
+                openApiConfig
+                    .withDocumentationPath("/openapi.json")
+                    .withDefinitionConfiguration((version, definition) ->
+                        definition.withInfo(info ->
+                            info.title("Javalin Seed API")
+                                .version("1.0.0")
+                                .description("API documentation for the Javalin Seed project")
+                        )
+                    )
+            ));
+
+            javalinConfig.registerPlugin(new SwaggerPlugin(swaggerConfig ->
+                swaggerConfig.setDocumentationPath("/openapi.json")
+            ));
 
             javalinConfig.router.apiBuilder(routes);
         });

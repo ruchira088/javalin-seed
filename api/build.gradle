@@ -21,12 +21,16 @@ repositories {
 }
 
 dependencies {
+    annotationProcessor "io.javalin.community.openapi:openapi-annotation-processor:$openApiVersion"
+
     implementation(
         "io.javalin:javalin-bundle:$javalinVersion",
         "com.typesafe:config:$typesafeConfigVersion",
         "ch.qos.logback:logback-classic:$logbackVersion",
         "net.logstash.logback:logstash-logback-encoder:$logstashLogbackVersion",
-        'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+        'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
+        "io.javalin.community.openapi:javalin-openapi-plugin:$openApiVersion",
+        "io.javalin.community.openapi:javalin-swagger-plugin:$openApiVersion"
     )
 
     testImplementation(

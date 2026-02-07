@@ -91,6 +91,32 @@ class AppTest {
     }
 
     @Test
+    void shouldServeOpenApiSpec() {
+        Routes routes = createMockRoutes();
+        Javalin app = App.javalin(routes, List.of());
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/openapi.json");
+            assertEquals(200, response.code());
+
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream());
+            assertEquals("Javalin Seed API", json.at("/info/title").asText());
+            assertNotNull(json.at("/paths/~1service~1info"));
+        });
+    }
+
+    @Test
+    void shouldServeSwaggerUi() {
+        Routes routes = createMockRoutes();
+        Javalin app = App.javalin(routes, List.of());
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/swagger");
+            assertEquals(200, response.code());
+        });
+    }
+
+    @Test
     void shouldStartAndStopServerWithRunMethod() throws Exception {
         int port = findAvailablePort();
         ApplicationConfiguration config = new ApplicationConfiguration(
@@ -104,7 +130,7 @@ class AppTest {
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-            .url("http://localhost:" + port + "/service/info")
+            .url("http://127.0.0.1:" + port + "/service/info")
             .build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -127,7 +153,7 @@ class AppTest {
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-            .url("http://localhost:19999/service/info")
+            .url("http://127.0.0.1:19999/service/info")
             .build();
 
         try (Response response = client.newCall(request).execute()) {

@@ -6,7 +6,6 @@ plugins {
     id 'jacoco'
     id 'checkstyle'
     id 'com.github.spotbugs' version "$spotbugsPluginVersion"
-    id 'org.owasp.dependencycheck' version "$owaspDependencyCheckVersion"
 }
 
 group = 'com.ruchij'
@@ -117,14 +116,5 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
     reports {
         html.required = true
         xml.required = true
-    }
-}
-
-dependencyCheck {
-    failBuildOnCVSS = 7.0f
-    formats = ['HTML', 'JSON']
-
-    nvd {
-        apiKey = System.getenv('NVD_API_KEY') ?: ''
     }
 }

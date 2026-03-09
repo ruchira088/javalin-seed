@@ -4,7 +4,7 @@ import com.ruchij.exceptions.ResourceConflictException;
 import com.ruchij.exceptions.ResourceNotFoundException;
 import com.ruchij.exceptions.ValidationException;
 import com.ruchij.web.responses.ErrorResponse;
-import io.javalin.Javalin;
+import io.javalin.config.RoutesConfig;
 import io.javalin.http.ExceptionHandler;
 import io.javalin.http.HttpStatus;
 
@@ -14,20 +14,19 @@ public class ExceptionMapper {
             context.attribute("exception", exception);
             context.status(httpStatus).json(new ErrorResponse(exception.getMessage()));
         };
-    };
+    }
 
-    public static void handle(Javalin app) {
-        app.exception(ValidationException.class, ExceptionMapper.handle(HttpStatus.BAD_REQUEST));
+    public static void handle(RoutesConfig routes) {
+        routes.exception(ValidationException.class, ExceptionMapper.handle(HttpStatus.BAD_REQUEST));
 
-        app.exception(ResourceNotFoundException.class, ExceptionMapper.handle(HttpStatus.NOT_FOUND));
+        routes.exception(ResourceNotFoundException.class, ExceptionMapper.handle(HttpStatus.NOT_FOUND));
 
-        app.exception(ResourceConflictException.class, ExceptionMapper.handle(HttpStatus.CONFLICT));
+        routes.exception(ResourceConflictException.class, ExceptionMapper.handle(HttpStatus.CONFLICT));
 
-        app.exception(Exception.class, ExceptionMapper.handle(HttpStatus.INTERNAL_SERVER_ERROR));
+        routes.exception(Exception.class, ExceptionMapper.handle(HttpStatus.INTERNAL_SERVER_ERROR));
 
-        app.error(HttpStatus.NOT_FOUND, context -> {
-            // No matching routes were found
-            if (context.matchedPath().equals("*")) {
+        routes.error(HttpStatus.NOT_FOUND, context -> {
+            if (context.endpoint().path.equals("*")) {
                 context
                     .status(HttpStatus.NOT_FOUND)
                     .json(

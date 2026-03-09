@@ -44,7 +44,6 @@ public class App {
         Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
 
         Javalin app = javalin(routes, applicationConfiguration.httpConfiguration().allowedOrigins());
-        ExceptionMapper.handle(app);
         app.start(applicationConfiguration.httpConfiguration().port());
 
         logger.info("Server is listening on port {}...", applicationConfiguration.httpConfiguration().port());
@@ -58,7 +57,7 @@ public class App {
 
     public static Javalin javalin(Routes routes, List<String> allowedOrigins) {
         return Javalin.create(javalinConfig -> {
-            javalinConfig.useVirtualThreads = true;
+            javalinConfig.concurrency.useVirtualThreads = true;
             javalinConfig.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true));
 
             // wait 7 seconds for existing requests to finish
@@ -77,7 +76,7 @@ public class App {
                 openApiConfig
                     .withDocumentationPath("/openapi.json")
                     .withDefinitionConfiguration((version, definition) ->
-                        definition.withInfo(info ->
+                        definition.info(info ->
                             info.title("Javalin Seed API")
                                 .version("1.0.0")
                                 .description("API documentation for the Javalin Seed project")
@@ -86,10 +85,11 @@ public class App {
             ));
 
             javalinConfig.registerPlugin(new SwaggerPlugin(swaggerConfig ->
-                swaggerConfig.setDocumentationPath("/openapi.json")
+                swaggerConfig.documentationPath = "/openapi.json"
             ));
 
-            javalinConfig.router.apiBuilder(routes);
+            javalinConfig.routes.apiBuilder(routes);
+            ExceptionMapper.handle(javalinConfig.routes);
         });
     }
 

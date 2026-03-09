@@ -73,6 +73,10 @@ tasks.register("generateBuildInfo") {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:all', '-Werror']
+}
+
 compileJava {
     dependsOn generateBuildInfo
 }

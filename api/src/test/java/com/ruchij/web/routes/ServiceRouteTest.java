@@ -5,7 +5,7 @@ import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.web.Routes;
 import io.javalin.testtools.JavalinTest;
-import okhttp3.Response;
+import io.javalin.testtools.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -53,7 +53,7 @@ class ServiceRouteTest {
 
             assertEquals(
                 OBJECT_MAPPER.readTree(expectedResponseBody),
-                OBJECT_MAPPER.readTree(response.body().byteStream())
+                OBJECT_MAPPER.readTree(response.body().string())
             );
         }));
     }

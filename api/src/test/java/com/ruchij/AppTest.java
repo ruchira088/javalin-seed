@@ -9,17 +9,18 @@ import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import io.javalin.testtools.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,20 +60,20 @@ class AppTest {
     }
 
     @Test
-    void shouldUseJacksonJsonMapper() throws Exception {
+    void shouldUseJacksonJsonMapper() {
         Routes routes = createMockRoutes();
         Javalin app = App.javalin(routes, List.of());
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/service/info");
-            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
             assertNotNull(json.get("serviceName"));
             assertEquals("test-app", json.get("serviceName").asText());
         });
     }
 
     @Test
-    void shouldSerializeInstantsCorrectly() throws Exception {
+    void shouldSerializeInstantsCorrectly() {
         HealthService healthService = Mockito.mock(HealthService.class);
         Instant fixedInstant = Instant.parse("2024-01-15T10:30:00Z");
         Mockito.when(healthService.serviceInformation())
@@ -85,7 +86,7 @@ class AppTest {
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/service/info");
-            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
             assertEquals("2024-01-15T10:30:00Z", json.get("currentTimestamp").asText());
             assertEquals("2024-01-15T10:30:00Z", json.get("buildTimestamp").asText());
         });
@@ -100,7 +101,7 @@ class AppTest {
             Response response = client.get("/openapi.json");
             assertEquals(200, response.code());
 
-            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream());
+            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
             assertEquals("Javalin Seed API", json.at("/info/title").asText());
             assertNotNull(json.at("/paths/~1service~1info"));
         });
@@ -128,14 +129,11 @@ class AppTest {
         serverThread.start();
 
         String url = "http://127.0.0.1:" + port + "/service/info";
-        try (Response response = waitForServer(url)) {
-            assertEquals(200, response.code());
-            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(
-                Objects.requireNonNull(response.body()).byteStream()
-            );
-            assertNotNull(json.get("serviceName"));
-            assertEquals("javalin-seed", json.get("serviceName").asText());
-        }
+        HttpResponse<String> response = waitForServer(url);
+        assertEquals(200, response.statusCode());
+        JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body());
+        assertNotNull(json.get("serviceName"));
+        assertEquals("javalin-seed", json.get("serviceName").asText());
     }
 
     @Test
@@ -145,29 +143,27 @@ class AppTest {
         mainThread.start();
 
         String url = "http://127.0.0.1:19999/service/info";
-        try (Response response = waitForServer(url)) {
-            assertEquals(200, response.code());
-            JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(
-                Objects.requireNonNull(response.body()).byteStream()
-            );
-            assertEquals("javalin-seed", json.get("serviceName").asText());
-        }
+        HttpResponse<String> response = waitForServer(url);
+        assertEquals(200, response.statusCode());
+        JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body());
+        assertEquals("javalin-seed", json.get("serviceName").asText());
     }
 
-    private static Response waitForServer(String url) throws Exception {
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url(url).build();
+    private static HttpResponse<String> waitForServer(String url) throws Exception {
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
 
-        int maxAttempts = 20;
-        for (int i = 0; i < maxAttempts; i++) {
-            try {
-                return client.newCall(request).execute();
-            } catch (IOException e) {
-                Thread.sleep(500);
+            int maxAttempts = 20;
+            for (int i = 0; i < maxAttempts; i++) {
+                try {
+                    return client.send(request, HttpResponse.BodyHandlers.ofString());
+                } catch (IOException e) {
+                    Thread.sleep(500);
+                }
             }
-        }
 
-        return client.newCall(request).execute();
+            return client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
     }
 
     private static int findAvailablePort() throws Exception {

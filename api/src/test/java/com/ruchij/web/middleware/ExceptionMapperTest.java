@@ -12,7 +12,7 @@ import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
 import io.javalin.json.JavalinJackson;
 import io.javalin.testtools.JavalinTest;
-import okhttp3.Response;
+import io.javalin.testtools.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -23,16 +23,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ExceptionMapperTest {
 
-    private Javalin createApp() {
-        Javalin app = Javalin.create(config -> config.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true)));
-        ExceptionMapper.handle(app);
-        return app;
+    private Javalin createAppWithRoute(io.javalin.http.Handler handler) {
+        return Javalin.create(config -> {
+            config.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true));
+            config.routes.get("/test", handler);
+            ExceptionMapper.handle(config.routes);
+        });
     }
 
     @Test
     void shouldReturn400ForValidationException() {
-        Javalin app = createApp();
-        app.get("/test", ctx -> {
+        Javalin app = createAppWithRoute(ctx -> {
             throw new ValidationException("Invalid input provided");
         });
 
@@ -45,15 +46,14 @@ class ExceptionMapperTest {
                 """;
             assertEquals(
                 JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
             );
         });
     }
 
     @Test
     void shouldReturn404ForResourceNotFoundException() {
-        Javalin app = createApp();
-        app.get("/test", ctx -> {
+        Javalin app = createAppWithRoute(ctx -> {
             throw new ResourceNotFoundException("User not found");
         });
 
@@ -66,15 +66,14 @@ class ExceptionMapperTest {
                 """;
             assertEquals(
                 JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
             );
         });
     }
 
     @Test
     void shouldReturn409ForResourceConflictException() {
-        Javalin app = createApp();
-        app.get("/test", ctx -> {
+        Javalin app = createAppWithRoute(ctx -> {
             throw new ResourceConflictException("Resource already exists");
         });
 
@@ -87,15 +86,14 @@ class ExceptionMapperTest {
                 """;
             assertEquals(
                 JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
             );
         });
     }
 
     @Test
     void shouldReturn500ForGenericException() {
-        Javalin app = createApp();
-        app.get("/test", ctx -> {
+        Javalin app = createAppWithRoute(ctx -> {
             throw new RuntimeException("Unexpected error");
         });
 
@@ -108,7 +106,7 @@ class ExceptionMapperTest {
                 """;
             assertEquals(
                 JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
             );
         });
     }
@@ -123,7 +121,6 @@ class ExceptionMapperTest {
 
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
-        ExceptionMapper.handle(app);
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/non-existing-route");
@@ -134,37 +131,43 @@ class ExceptionMapperTest {
                 """;
             assertEquals(
                 JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().byteStream())
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
             );
         });
     }
 
     @Test
     void shouldStoreExceptionAsContextAttribute() {
-        Javalin app = createApp();
         ValidationException testException = new ValidationException("Test error");
-        app.get("/test", ctx -> {
-            throw testException;
-        });
-        app.after(ctx -> {
-            Exception stored = ctx.attribute("exception");
-            if (stored != null) {
-                ctx.header("X-Exception-Stored", "true");
-            }
+        Javalin app = Javalin.create(config -> {
+            config.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true));
+            config.routes.get("/test", ctx -> {
+                throw testException;
+            });
+            config.routes.after(ctx -> {
+                Exception stored = ctx.attribute("exception");
+                if (stored != null) {
+                    ctx.header("X-Exception-Stored", "true");
+                }
+            });
+            ExceptionMapper.handle(config.routes);
         });
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(400, response.code());
-            assertEquals("true", response.header("X-Exception-Stored"));
+            assertEquals("true", response.headers().get("X-Exception-Stored").getFirst());
         });
     }
 
     @Test
     void shouldNotOverrideExplicit404FromRoute() {
-        Javalin app = createApp();
-        app.get("/explicit-404", ctx -> {
-            ctx.status(HttpStatus.NOT_FOUND).result("Custom not found");
+        Javalin app = Javalin.create(config -> {
+            config.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true));
+            config.routes.get("/explicit-404", ctx -> {
+                ctx.status(HttpStatus.NOT_FOUND).result("Custom not found");
+            });
+            ExceptionMapper.handle(config.routes);
         });
 
         JavalinTest.test(app, (server, client) -> {

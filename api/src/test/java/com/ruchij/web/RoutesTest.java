@@ -6,7 +6,7 @@ import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.web.routes.ServiceRoute;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
-import okhttp3.Response;
+import io.javalin.testtools.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 

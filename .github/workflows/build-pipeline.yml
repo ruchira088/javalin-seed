@@ -46,7 +46,7 @@ jobs:
         run: ./gradlew check
 
       - name: Publish test results
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: success() || failure()
         with:
           name: Test Results
@@ -108,21 +108,21 @@ jobs:
           EOF
 
       - name: Upload test report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success() || failure()
         with:
           name: test-report
           path: api/build/reports/tests/test/
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success() || failure()
         with:
           name: coverage-report
           path: api/build/reports/jacoco/test/html/
 
       - name: Upload static analysis reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: success() || failure()
         with:
           name: static-analysis-reports

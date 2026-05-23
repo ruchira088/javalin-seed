@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: javalin-seed-ingress
   namespace: "{{ k8s_namespace }}"
+  annotations:
+    cert-manager.io/cluster-issuer: lets-encrypt
 spec:
   tls:
     - secretName: javalin-seed-tls

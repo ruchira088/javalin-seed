@@ -14,7 +14,7 @@ data:
             </encoder>
         </appender>
         
-        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
             <destination>server.internal.ruchij.com:5001</destination>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <includeContext>true</includeContext>

@@ -2,7 +2,7 @@ import java.time.Instant
 
 plugins {
     id 'application'
-    id 'com.github.ben-manes.versions' version "$dependencyUpdatesPluginVersion"
+    id 'io.github.ben-manes.versions' version "$dependencyUpdatesPluginVersion"
     id 'jacoco'
     id 'checkstyle'
     id 'com.github.spotbugs' version "$spotbugsPluginVersion"

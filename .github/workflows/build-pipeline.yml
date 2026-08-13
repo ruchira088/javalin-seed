@@ -5,10 +5,6 @@ on:
     branches:
       - "**"
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   compile-and-test:
     name: Compile and test
@@ -183,6 +179,10 @@ jobs:
 
     if: github.ref != 'refs/heads/main'
 
+    concurrency:
+      group: deploy-to-${{ github.ref }}
+      cancel-in-progress: false
+
     permissions:
       contents: read
       id-token: write
@@ -211,6 +211,10 @@ jobs:
 
     if: github.ref == 'refs/heads/main'
 
+    concurrency:
+      group: deploy-to-staging
+      cancel-in-progress: false
+
     permissions:
       contents: read
       id-token: write
@@ -238,6 +242,10 @@ jobs:
     environment: Production
 
     if: github.ref == 'refs/heads/main'
+
+    concurrency:
+      group: deploy-to-production
+      cancel-in-progress: false
 
     permissions:
       contents: read

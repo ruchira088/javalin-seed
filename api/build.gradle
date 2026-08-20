@@ -49,6 +49,8 @@ application {
 
 def buildDirectory = layout.buildDirectory.dir("generated/src/main/java").get()
 
+def projectGroup = project.group
+
 tasks.register("generateBuildInfo") {
     doLast {
         def buildInfoDirectory = buildDirectory.dir("com/ruchij/build")
@@ -63,7 +65,7 @@ tasks.register("generateBuildInfo") {
             
             public final class BuildInfo {
                 public static final String APPLICATION_NAME = "javalin-seed";
-                public static final String APPLICATION_GROUP = "${project.group}";
+                public static final String APPLICATION_GROUP = "${projectGroup}";
                 public static final String GRADLE_VERSION = "${gradle.gradleVersion}";
                 public static final Instant BUILD_TIMESTAMP = Instant.parse("${Instant.now()}");
                 public static final String GIT_BRANCH = "${'git rev-parse --abbrev-ref HEAD'.execute().text.trim()}";

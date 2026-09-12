@@ -35,6 +35,9 @@ Reports land under `api/build/reports/` (`tests/test/`, `jacoco/test/html/`, `ch
 
 - **`-Xlint:all -Werror`** is set for every `JavaCompile` task: any compiler warning (deprecation, unchecked,
   unused varargs…) fails the build.
+- **JaCoCo coverage floor**: `check` runs `jacocoTestCoverageVerification`, which fails the build if line coverage
+  drops below 90% (the generated `com.ruchij.build` package is excluded). Compilation uses a Gradle JDK toolchain
+  (`languageVersion = 25`), so a JDK 25 must be installed locally — Gradle auto-detects SDKMAN/Homebrew installs.
 - **Checkstyle** (`config/checkstyle/checkstyle.xml`) enforces a 150-column line limit, no star imports,
   braces on all blocks, and standard naming. **SpotBugs** exclusions live in `config/spotbugs/exclude.xml`; the
   `EI_EXPOSE_REP` suppression there is intentional for records holding unmodifiable `List`s — add new record/DI

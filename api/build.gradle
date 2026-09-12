@@ -11,8 +11,9 @@ plugins {
 group = 'com.ruchij'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 repositories {
@@ -96,6 +97,9 @@ tasks.named('test') {
     finalizedBy jacocoTestReport
 }
 
+// The generated BuildInfo class holds only constants; keep it out of the coverage numbers.
+def jacocoExcludes = ['com/ruchij/build/**']
+
 distTar {
     archiveFileName = 'api.tar'
 }
@@ -107,7 +111,24 @@ jacocoTestReport {
         csv.required = true
         html.required = true
     }
+    classDirectories.setFrom(classDirectories.files.collect { fileTree(it) { exclude jacocoExcludes } })
 }
+
+jacocoTestCoverageVerification {
+    dependsOn test
+    classDirectories.setFrom(classDirectories.files.collect { fileTree(it) { exclude jacocoExcludes } })
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
 
 checkstyle {
     toolVersion = checkstyleVersion

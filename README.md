@@ -9,8 +9,8 @@ A template repository for bootstrapping a Java HTTP API service. It ships with e
 - **Typesafe Config** for layered configuration via `application.conf` and environment variables.
 - **Logback** with [logstash-logback-encoder](https://github.com/logfellow/logstash-logback-encoder) for JSON logs.
 - **`/service/info` health endpoint** that reports build metadata (name, group, git branch/commit, build timestamp, Gradle version, JVM properties) — populated at compile time by a `generateBuildInfo` Gradle task.
-- **Quality gates**: Checkstyle, SpotBugs, JaCoCo coverage, and `-Werror -Xlint:all`.
-- **Tests**: JUnit 5 + Mockito, with end-to-end tests against a real Javalin instance.
+- **Quality gates**: Checkstyle, SpotBugs, JaCoCo coverage, and `-Werror -Xlint:all`. The [Gradle Versions plugin](https://github.com/ben-manes/gradle-versions-plugin) reports outdated dependencies.
+- **Tests**: JUnit 6 (Jupiter) + Mockito, with end-to-end tests against a real Javalin instance.
 - **CI/CD**: GitHub Actions pipeline (`.github/workflows/build-pipeline.yml`) and Ansible playbooks (`playbooks/`) that build a Docker image and deploy it to Kubernetes (dev / staging / production).
 
 ## Using this template
@@ -65,6 +65,7 @@ Requirements: **JDK 25**.
 ./gradlew build           # compile + test + checkstyle + spotbugs
 ./gradlew test            # tests + JaCoCo report
 ./gradlew run             # start the API on http://localhost:8080
+./gradlew dependencyUpdates  # report newer versions of dependencies pinned in gradle.properties
 ```
 
 Configuration is read from `api/src/main/resources/application.conf` and overridable via environment variables:

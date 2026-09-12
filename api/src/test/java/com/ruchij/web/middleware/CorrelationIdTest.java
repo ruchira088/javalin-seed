@@ -104,6 +104,50 @@ class CorrelationIdTest {
         });
     }
 
+    @Test
+    void shouldReplaceCorrelationIdContainingUnsafeCharacters() {
+        HealthService healthService = Mockito.mock(HealthService.class);
+        Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
+
+        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+            Response response = client.get(
+                "/service/info",
+                request -> request.header(CorrelationId.HEADER_NAME, "abc\t2026-09-13 [main] ERROR forged log line")
+            );
+
+            String correlationId = correlationIdHeader(response);
+            assertEquals(correlationId, UUID.fromString(correlationId).toString());
+        });
+    }
+
+    @Test
+    void shouldReplaceOverlyLongCorrelationId() {
+        HealthService healthService = Mockito.mock(HealthService.class);
+        Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
+
+        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+            Response response =
+                client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, "a".repeat(65)));
+
+            String correlationId = correlationIdHeader(response);
+            assertEquals(correlationId, UUID.fromString(correlationId).toString());
+        });
+    }
+
+    @Test
+    void shouldAcceptCorrelationIdAtMaximumLength() {
+        HealthService healthService = Mockito.mock(HealthService.class);
+        Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
+
+        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+            String maxLengthId = "a".repeat(64);
+            Response response =
+                client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, maxLengthId));
+
+            assertEquals(maxLengthId, correlationIdHeader(response));
+        });
+    }
+
     private static String correlationIdHeader(Response response) {
         List<String> values = response.headers().get(CorrelationId.HEADER_NAME);
         assertEquals(1, values.size());

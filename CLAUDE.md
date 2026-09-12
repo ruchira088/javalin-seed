@@ -66,7 +66,8 @@ them to an `ErrorResponse` JSON body. Anything else becomes a 500. New exception
 `ExceptionMapper.handle(RoutesConfig)`.
 
 **Correlation IDs**: `web/middleware/CorrelationId` (registered in `App.javalin` beside `ExceptionMapper`) reads
-`X-Correlation-ID` from each request — or generates a UUID — puts it in the SLF4J MDC as `correlationId`, stores it
+`X-Correlation-ID` from each request — or generates a UUID when it is absent or fails the `[A-Za-z0-9._:-]{1,64}`
+allow-list, since the value is written into log lines — puts it in the SLF4J MDC as `correlationId`, stores it
 as a `Context` attribute of the same name, and echoes it on the response. The Logback console pattern prints it and
 the logstash encoder includes MDC, so it appears in every log line for the request. The K8s probes send this header.
 

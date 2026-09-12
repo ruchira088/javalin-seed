@@ -94,3 +94,11 @@ depends on that value.
 The image (`playbooks/docker/Dockerfile.j2`) unpacks the `distTar` output (`api.tar`) and runs the
 `application`-plugin start script; that script passes `-Dlogback.configurationFile=/opt/data/logback.xml`, so in
 Kubernetes the Logback config comes from a mounted ConfigMap rather than the bundled `logback.xml`.
+
+Each non-`main` branch gets its own dev namespace, `javalin-seed-<branch>`, where `<branch>` is produced by
+`playbooks/tasks/sanitize-branch.yml` (lower-case, non-alphanumerics to `-`, max 37 chars). The same sanitised name
+is the Docker tag. `.github/workflows/cleanup-dev-environment.yml` runs on branch deletion or PR merge and calls
+`playbooks/dev-remove.yml`, which deletes that namespace (matched by name *and* `project`/`branch` labels) and the
+branch's GHCR image versions via `scripts/delete_ghcr_branch_images.py` (needs a classic PAT with `delete:packages`,
+read from SSM). `main`, `staging` and `production` are refused at both the workflow and playbook level.
+`scripts/test_*.py` are plain `unittest` tests, run by the `Test scripts` CI step.

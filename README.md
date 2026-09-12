@@ -11,7 +11,7 @@ A template repository for bootstrapping a Java HTTP API service. It ships with e
 - **`/service/info` health endpoint** that reports build metadata (name, group, git branch/commit, build timestamp, Gradle version, JVM properties) — populated at compile time by a `generateBuildInfo` Gradle task.
 - **Quality gates**: Checkstyle, SpotBugs, JaCoCo coverage, and `-Werror -Xlint:all`. The [Gradle Versions plugin](https://github.com/ben-manes/gradle-versions-plugin) reports outdated dependencies.
 - **Tests**: JUnit 6 (Jupiter) + Mockito, with end-to-end tests against a real Javalin instance.
-- **CI/CD**: GitHub Actions pipeline (`.github/workflows/build-pipeline.yml`) and Ansible playbooks (`playbooks/`) that build a Docker image and deploy it to Kubernetes (dev / staging / production).
+- **CI/CD**: GitHub Actions pipeline (`.github/workflows/build-pipeline.yml`) and Ansible playbooks (`playbooks/`) that build a Docker image and deploy it to Kubernetes (dev / staging / production). Per-branch dev environments and their GHCR images are torn down automatically when the branch is deleted or its PR is merged (`.github/workflows/cleanup-dev-environment.yml`).
 
 ## Using this template
 

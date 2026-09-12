@@ -1,0 +1,52 @@
+name: Cleanup Dev Environment
+
+# Removes the per-branch dev deployment (K8s namespace) and the branch's GHCR images once the branch is deleted or
+# its pull request is merged. Shared environments are never touched: `main` is excluded here and the playbook
+# refuses `main`, `staging` and `production` again.
+on:
+  delete:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  remove-dev-environment:
+    name: Remove dev environment
+    runs-on: ubuntu-latest
+
+    if: >-
+      (github.event_name == 'delete'
+        && github.event.ref_type == 'branch'
+        && github.event.ref != 'main')
+      || (github.event_name == 'pull_request'
+        && github.event.pull_request.merged
+        && github.event.pull_request.head.repo.full_name == github.repository
+        && github.event.pull_request.head.ref != 'main')
+
+    # Shares the deploy-to-dev concurrency group so a cleanup never races a deployment of the same branch.
+    concurrency:
+      group: deploy-to-refs/heads/${{ github.event_name == 'delete' && github.event.ref || github.event.pull_request.head.ref }}
+      cancel-in-progress: false
+
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      BRANCH_NAME: ${{ github.event_name == 'delete' && github.event.ref || github.event.pull_request.head.ref }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        with:
+          aws-region: ap-southeast-2
+          role-session-name: javalin-seed-dev-remove
+          role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
+
+      - name: Remove dev environment
+        run: ansible-playbook -vvv playbooks/dev-remove.yml

@@ -3,16 +3,12 @@
   register: git_commit_output
 
 - name: Get the git branch name
-  shell: >-
-    git rev-parse --abbrev-ref HEAD
-    | tr '[:upper:]' '[:lower:]'
-    | sed -E 's/[^a-z0-9-]/-/g'
-    | sed -E 's/-+/-/g'
-    | sed -E 's/^-//;s/-$//'
-    | cut -c1-37
-    | sed -E 's/-$//'
-  register: git_branch_output
+  command: git rev-parse --abbrev-ref HEAD
+  register: raw_git_branch_output
 
 - set_fact:
     git_commit: "{{ git_commit_output.stdout }}"
-    git_branch: "{{ git_branch_output.stdout }}"
+    raw_git_branch: "{{ raw_git_branch_output.stdout }}"
+
+- name: Sanitize the git branch name
+  import_tasks: tasks/sanitize-branch.yml

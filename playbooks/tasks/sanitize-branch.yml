@@ -1,0 +1,16 @@
+# Turns `raw_git_branch` into `git_branch`: a lower-case, dash-separated, at most 37 character name that is safe
+# to use in K8s namespaces, hostnames and Docker tags. Every place that derives a name from a branch must use this
+# so that deploy and cleanup agree on the same namespace/tag for a given branch.
+- name: Sanitize the git branch name
+  shell: >-
+    printf '%s\n' {{ raw_git_branch | quote }}
+    | tr '[:upper:]' '[:lower:]'
+    | sed -E 's/[^a-z0-9-]/-/g'
+    | sed -E 's/-+/-/g'
+    | sed -E 's/^-//;s/-$//'
+    | cut -c1-37
+    | sed -E 's/-$//'
+  register: git_branch_output
+
+- set_fact:
+    git_branch: "{{ git_branch_output.stdout }}"

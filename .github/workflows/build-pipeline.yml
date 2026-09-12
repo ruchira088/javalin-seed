@@ -35,6 +35,9 @@ jobs:
             ${{ runner.os }}-${{ hashFiles('**/gradle-wrapper.properties') }}
             ${{ runner.os }}
 
+      - name: Test scripts
+        run: python3 -m unittest discover --start-directory scripts --pattern 'test_*.py'
+
       - name: Assemble
         run: ./gradlew assemble
 

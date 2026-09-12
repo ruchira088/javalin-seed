@@ -1,0 +1,61 @@
+---
+# Tears down the dev environment for a branch: the K8s namespace (which cascades to everything deployed in it) and
+# the branch's Docker images in GHCR. Invoked by the cleanup-dev-environment workflow with BRANCH_NAME set to the raw
+# branch name; deploy and cleanup share tasks/sanitize-branch.yml so they agree on the namespace and image tags.
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Install dependencies
+      import_tasks: tasks/install-dependencies.yml
+
+    - set_fact:
+        raw_git_branch: "{{ lookup('env', 'BRANCH_NAME') }}"
+
+    - name: Sanitize the git branch name
+      import_tasks: tasks/sanitize-branch.yml
+
+    - name: Refuse to remove shared environments
+      assert:
+        that:
+          - git_branch | length > 0
+          - git_branch not in ['main', 'staging', 'production']
+        fail_msg: "Refusing to remove resources for branch '{{ raw_git_branch }}' (sanitized: '{{ git_branch }}')"
+
+    - set_fact:
+        k8s_namespace: "javalin-seed-{{ git_branch }}"
+        aws_ssm_k8s_config: /infrastructure/dev/k8s/config
+
+    - name: Fetch the K8s config
+      import_tasks: tasks/k8s-config.yml
+
+    # Both selectors must match, so only a namespace that dev-deploy created for this exact branch can be deleted.
+    - name: Delete the branch's K8s namespace
+      command: >-
+        kubectl delete namespace
+        --field-selector metadata.name={{ k8s_namespace }}
+        --selector project=javalin-seed,branch={{ git_branch }}
+        --wait=true --timeout=5m
+        --kubeconfig {{ kubeconfig }}
+      register: delete_namespace_output
+
+    - debug:
+        msg: "{{ delete_namespace_output.stdout_lines + delete_namespace_output.stderr_lines }}"
+
+    - name: Delete the branch's Docker images from GHCR
+      command: >-
+        python3 ../scripts/delete-ghcr-branch-images.py
+        --owner ruchira088 --package javalin-seed-api --branch {{ git_branch }}
+      environment:
+        GITHUB_TOKEN: "{{ lookup('aws_ssm', ghcr_delete_token_parameter, region='ap-southeast-2') }}"
+      vars:
+        ghcr_delete_token_parameter: /github/packages/read-write-token
+      register: delete_images_output
+
+    - debug:
+        msg: "{{ delete_images_output.stdout_lines }}"
+
+    - name: Clean up output directory
+      file:
+        path: "{{ k8s_output_dir }}"
+        state: absent

@@ -1,13 +1,19 @@
 FROM eclipse-temurin:25-jre
 
 LABEL org.opencontainers.image.source=https://github.com/ruchira088/javalin-seed
+LABEL org.opencontainers.image.revision={{ git_commit }}
 
-ENV GIT_BRANCH {{ git_branch }}
-ENV GIT_COMMIT {{ git_commit }}
-ENV BUILD_TIMESTAMP {{ build_timestamp }}
+ENV GIT_BRANCH={{ git_branch }}
+ENV GIT_COMMIT={{ git_commit }}
+ENV BUILD_TIMESTAMP={{ build_timestamp }}
+
+RUN useradd --system --uid 1001 --user-group --no-create-home javalin
 
 WORKDIR /opt/javalin-seed-{{ app }}
 
+# ADD (not COPY) so the distTar archive is extracted into the working directory
 ADD {{ app }}.tar .
+
+USER javalin
 
 CMD [ "/opt/javalin-seed-{{ app }}/{{ app }}/bin/{{ app }}" ]

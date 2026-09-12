@@ -65,6 +65,11 @@ are silently missing from the spec), and mount it in `Routes.addEndpoints()`.
 them to an `ErrorResponse` JSON body. Anything else becomes a 500. New exception types need a line in
 `ExceptionMapper.handle(RoutesConfig)`.
 
+**Correlation IDs**: `web/middleware/CorrelationId` (registered in `App.javalin` beside `ExceptionMapper`) reads
+`X-Correlation-ID` from each request — or generates a UUID — puts it in the SLF4J MDC as `correlationId`, stores it
+as a `Context` attribute of the same name, and echoes it on the response. The Logback console pattern prints it and
+the logstash encoder includes MDC, so it appears in every log line for the request. The K8s probes send this header.
+
 **Configuration**: Typesafe Config. `application.conf` uses the `key = ${?ENV_VAR}` idiom so environment
 variables override file values. Optional keys are read through `ConfigReaders.optionalConfig(...)`, which turns
 `ConfigException.Missing` into `Optional.empty()`. Config is parsed into records (`ApplicationConfiguration`,

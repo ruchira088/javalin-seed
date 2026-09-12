@@ -5,6 +5,7 @@ import com.ruchij.service.health.HealthServiceImpl;
 import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
+import com.ruchij.web.middleware.CorrelationId;
 import com.ruchij.web.middleware.ExceptionMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -89,6 +90,7 @@ public class App {
             ));
 
             javalinConfig.routes.apiBuilder(routes);
+            CorrelationId.register(javalinConfig.routes);
             ExceptionMapper.handle(javalinConfig.routes);
         });
     }

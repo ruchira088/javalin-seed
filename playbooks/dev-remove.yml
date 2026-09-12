@@ -44,7 +44,7 @@
 
     - name: Delete the branch's Docker images from GHCR
       command: >-
-        python3 ../scripts/delete-ghcr-branch-images.py
+        python3 ../scripts/delete_ghcr_branch_images.py
         --owner ruchira088 --package javalin-seed-api --branch {{ git_branch }}
       environment:
         GITHUB_TOKEN: "{{ lookup('aws_ssm', ghcr_delete_token_parameter, region='ap-southeast-2') }}"

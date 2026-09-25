@@ -11,7 +11,7 @@ Checkstyle/SpotBugs config, and deployment playbooks. See `README.md` for the te
 
 ## Commands
 
-Requires JDK 25. The wrapper pins Gradle 9.7.1.
+Requires JDK 25. The wrapper pins Gradle 9.8.0.
 
 ```bash
 ./gradlew build                 # compile + test + Checkstyle + SpotBugs + JaCoCo (what to run before pushing)

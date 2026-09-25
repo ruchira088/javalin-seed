@@ -100,6 +100,10 @@ tasks.named('test') {
 // The generated BuildInfo class holds only constants; keep it out of the coverage numbers.
 def jacocoExcludes = ['com/ruchij/build/**']
 
+jacoco {
+    toolVersion = jacocoVersion
+}
+
 distTar {
     archiveFileName = 'api.tar'
 }

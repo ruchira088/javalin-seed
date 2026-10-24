@@ -8,7 +8,7 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: javalin-seed-deployment
-  minReplicas: 1
+  minReplicas: {{ min_replicas }}
   maxReplicas: 10
   metrics:
     - type: Resource

@@ -7,6 +7,7 @@ import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import com.ruchij.web.middleware.CorrelationId;
 import com.ruchij.web.middleware.ExceptionMapper;
+import com.ruchij.web.middleware.RequestLogging;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.javalin.Javalin;
@@ -21,13 +22,6 @@ import java.util.List;
 import java.util.Properties;
 
 public class App {
-    private static final List<String> DEFAULT_ALLOWED_ORIGINS = List.of(
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "https://*.ruchij.com",
-        "https://*.home.ruchij.com"
-    );
-
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
@@ -64,14 +58,16 @@ public class App {
             // wait 7 seconds for existing requests to finish
             javalinConfig.jetty.modifyServer(server -> server.setStopTimeout(7_000));
 
-            javalinConfig.bundledPlugins.enableCors(cors -> {
-                cors.addRule(rule -> {
-                    DEFAULT_ALLOWED_ORIGINS.forEach(rule::allowHost);
-                    allowedOrigins.forEach(rule::allowHost);
+            // The CORS plugin rejects an empty origin list; with none configured, cross-origin requests are refused
+            if (!allowedOrigins.isEmpty()) {
+                javalinConfig.bundledPlugins.enableCors(cors -> {
+                    cors.addRule(rule -> {
+                        allowedOrigins.forEach(rule::allowHost);
 
-                    rule.allowCredentials = true;
+                        rule.allowCredentials = true;
+                    });
                 });
-            });
+            }
 
             javalinConfig.registerPlugin(new OpenApiPlugin(openApiConfig ->
                 openApiConfig
@@ -79,7 +75,7 @@ public class App {
                     .withDefinitionConfiguration((version, definition) ->
                         definition.info(info ->
                             info.title("Javalin Seed API")
-                                .version("1.0.0")
+                                .version(BuildInformation.get().gitCommit())
                                 .description("API documentation for the Javalin Seed project")
                         )
                     )
@@ -92,6 +88,7 @@ public class App {
             javalinConfig.routes.apiBuilder(routes);
             CorrelationId.register(javalinConfig.routes);
             ExceptionMapper.handle(javalinConfig.routes);
+            RequestLogging.register(javalinConfig.requestLogger);
         });
     }
 

@@ -22,7 +22,7 @@ data:
             </encoder>
         </appender>
         
-        <logger name="com.ruchij" level="TRACE" additivity="false">
+        <logger name="com.ruchij" level="{{ app_log_level }}" additivity="false">
             <appender-ref ref="STD_OUT"/>
             <appender-ref ref="LOGSTASH"/>
         </logger>

@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: javalin-seed-pdb
+  namespace: "{{ k8s_namespace }}"
+spec:
+  # maxUnavailable (rather than minAvailable: 1) so single-replica environments can still be drained
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: javalin-seed
+      branch: "{{ git_branch }}"

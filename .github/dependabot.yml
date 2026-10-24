@@ -20,3 +20,14 @@ updates:
         update-types:
           - minor
           - patch
+
+  # Dependabot matches any filename containing "Dockerfile", so it picks up the FROM line in Dockerfile.j2
+  - package-ecosystem: docker
+    directory: /playbooks/docker
+    schedule:
+      interval: weekly
+    ignore:
+      # Majors move to a new JDK release (often non-LTS); upgrade those deliberately alongside the toolchain
+      - dependency-name: eclipse-temurin
+        update-types:
+          - version-update:semver-major

@@ -21,6 +21,7 @@
         kubeconfig: "{{ k8s_output_dir }}/kubeconfig"
 
     - name: Create K8s config file
+      no_log: true
       copy:
         dest: "{{ kubeconfig }}"
         content: "{{ lookup('aws_ssm', aws_ssm_k8s_config, region='ap-southeast-2') }}"

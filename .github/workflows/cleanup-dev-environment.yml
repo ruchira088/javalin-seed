@@ -49,4 +49,4 @@ jobs:
           role-to-assume: "arn:aws:iam::365562660444:role/github_iam_role"
 
       - name: Remove dev environment
-        run: ansible-playbook -vvv playbooks/dev-remove.yml
+        run: ansible-playbook playbooks/dev-remove.yml

@@ -1,5 +1,9 @@
 package com.ruchij.web.middleware;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.ruchij.App;
 import com.ruchij.exceptions.ResourceConflictException;
 import com.ruchij.exceptions.ResourceNotFoundException;
@@ -15,6 +19,7 @@ import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
@@ -92,9 +97,9 @@ class ExceptionMapperTest {
     }
 
     @Test
-    void shouldReturn500ForGenericException() {
+    void shouldReturnGeneric500WithoutLeakingExceptionMessage() {
         Javalin app = createAppWithRoute(ctx -> {
-            throw new RuntimeException("Unexpected error");
+            throw new RuntimeException("Connection refused: db.internal:5432");
         });
 
         JavalinTest.test(app, (server, client) -> {
@@ -102,13 +107,40 @@ class ExceptionMapperTest {
             assertEquals(500, response.code());
 
             String expectedBody = """
-                {"error":"Unexpected error"}
+                {"error":"An unexpected error occurred"}
                 """;
             assertEquals(
                 JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
                 JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
             );
         });
+    }
+
+    @Test
+    void shouldLogUnhandledExceptionWithStackTrace() {
+        RuntimeException exception = new RuntimeException("Connection refused: db.internal:5432");
+        Javalin app = createAppWithRoute(ctx -> {
+            throw exception;
+        });
+
+        Logger logger = (Logger) LoggerFactory.getLogger(ExceptionMapper.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            JavalinTest.test(app, (server, client) -> {
+                client.get("/test");
+
+                assertEquals(1, appender.list.size());
+                ILoggingEvent event = appender.list.getFirst();
+                assertEquals(Level.ERROR, event.getLevel());
+                assertEquals("Unhandled exception for GET /test", event.getFormattedMessage());
+                assertEquals(exception.getMessage(), event.getThrowableProxy().getMessage());
+            });
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     @Test

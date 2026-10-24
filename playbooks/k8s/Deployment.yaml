@@ -14,9 +14,26 @@ spec:
         app: javalin-seed
         branch: "{{ git_branch }}"
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: javalin-seed-api-container
           image: "ghcr.io/ruchira088/javalin-seed-api:{{ git_branch }}-{{ git_commit }}"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          lifecycle:
+            # Keep serving while the endpoint removal propagates to the Service/Ingress, so no requests are sent to a
+            # pod that has already stopped; Jetty then drains in-flight requests for up to 7s (well inside the 30s grace)
+            preStop:
+              exec:
+                command: ["sleep", "5"]
           envFrom:
             - configMapRef:
                 name: javalin-seed-data-config-map
@@ -28,7 +45,7 @@ spec:
             failureThreshold: 3
             httpGet:
               port: javalin-port
-              path: /service/info
+              path: /service/health
               httpHeaders:
                 - name: X-Correlation-ID
                   value: k8s-readiness-probe
@@ -38,7 +55,7 @@ spec:
             failureThreshold: 3
             httpGet:
               port: javalin-port
-              path: /service/info
+              path: /service/health
               httpHeaders:
                 - name: X-Correlation-ID
                   value: k8s-liveness-probe
@@ -48,7 +65,7 @@ spec:
             failureThreshold: 5
             httpGet:
               port: javalin-port
-              path: /service/info
+              path: /service/health
               httpHeaders:
                 - name: X-Correlation-ID
                   value: k8s-startup-probe
@@ -64,10 +81,15 @@ spec:
           volumeMounts:
             - mountPath: /opt/data
               name: file-config-map
+            # The root filesystem is read-only; the JVM and Jetty still need a writable temp directory
+            - mountPath: /tmp
+              name: tmp
       volumes:
         - name: file-config-map
           configMap:
             name: javalin-seed-file-config-map
+        - name: tmp
+          emptyDir: {}
       imagePullSecrets:
         - name: docker-registry-credentials
 

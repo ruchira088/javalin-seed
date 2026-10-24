@@ -1,11 +1,9 @@
-import java.time.Instant
-
 plugins {
     id 'application'
-    id 'io.github.ben-manes.versions' version "$dependencyUpdatesPluginVersion"
     id 'jacoco'
     id 'checkstyle'
-    id 'com.github.spotbugs' version "$spotbugsPluginVersion"
+    alias(libs.plugins.versions)
+    alias(libs.plugins.spotbugs)
 }
 
 group = 'com.ruchij'
@@ -21,23 +19,23 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor "io.javalin.community.openapi:openapi-annotation-processor:$openApiVersion"
+    annotationProcessor libs.javalin.openapi.annotation.processor
 
     implementation(
-        "io.javalin:javalin-bundle:$javalinVersion",
-        "com.typesafe:config:$typesafeConfigVersion",
-        "ch.qos.logback:logback-classic:$logbackVersion",
-        "net.logstash.logback:logstash-logback-encoder:$logstashLogbackVersion",
-        'com.fasterxml.jackson.datatype:jackson-datatype-jdk8',
-        "io.javalin.community.openapi:javalin-openapi-plugin:$openApiVersion",
-        "io.javalin.community.openapi:javalin-swagger-plugin:$openApiVersion"
+        libs.javalin.bundle,
+        libs.typesafe.config,
+        libs.logback.classic,
+        libs.logstash.logback.encoder,
+        libs.jackson.datatype.jdk8,
+        libs.javalin.openapi.plugin,
+        libs.javalin.swagger.plugin
     )
 
     testImplementation(
-        platform("org.junit:junit-bom:$junitVersion"),
-        'org.junit.jupiter:junit-jupiter',
-        'org.junit.platform:junit-platform-launcher',
-        "org.mockito:mockito-core:$mockitoVersion"
+        platform(libs.junit.bom),
+        libs.junit.jupiter,
+        libs.junit.platform.launcher,
+        libs.mockito.core
     )
 }
 
@@ -48,29 +46,47 @@ application {
     ]
 }
 
-def buildDirectory = layout.buildDirectory.dir("generated/src/main/java").get()
+def generatedSourcesDirectory = layout.buildDirectory.dir("generated/src/main/java")
 
-def projectGroup = project.group
+def gitOutput = { List<String> arguments, String fallback ->
+    providers.exec {
+        commandLine(['git'] + arguments)
+        ignoreExitValue = true
+    }.standardOutput.asText.map { it.trim() ?: fallback }
+}
 
-tasks.register("generateBuildInfo") {
+// Every input is derived from the checked-out commit (BUILD_TIMESTAMP is the commit time, not the wall clock), so
+// the task, compileJava and test stay up-to-date and cacheable until HEAD moves.
+def generateBuildInfo = tasks.register("generateBuildInfo") {
+    def applicationGroup = project.group.toString()
+    def gradleVersion = gradle.gradleVersion
+    def gitBranch = gitOutput(['rev-parse', '--abbrev-ref', 'HEAD'], 'unknown')
+    def gitCommit = gitOutput(['rev-parse', '--short', 'HEAD'], 'unknown')
+    def gitCommitEpochSeconds = gitOutput(['log', '-1', '--format=%ct'], '0')
+
+    inputs.property("applicationGroup", applicationGroup)
+    inputs.property("gradleVersion", gradleVersion)
+    inputs.property("gitBranch", gitBranch)
+    inputs.property("gitCommit", gitCommit)
+    inputs.property("gitCommitEpochSeconds", gitCommitEpochSeconds)
+    outputs.dir(generatedSourcesDirectory)
+
     doLast {
-        def buildInfoDirectory = buildDirectory.dir("com/ruchij/build")
-        buildInfoDirectory.asFile.mkdirs()
-
-        def buildInfoFile = buildInfoDirectory.file("BuildInfo.java").asFile
+        def buildInfoFile = generatedSourcesDirectory.get().file("com/ruchij/build/BuildInfo.java").asFile
+        buildInfoFile.parentFile.mkdirs()
 
         buildInfoFile.text = """
             package com.ruchij.build;
 
             import java.time.Instant;
-            
+
             public final class BuildInfo {
                 public static final String APPLICATION_NAME = "javalin-seed";
-                public static final String APPLICATION_GROUP = "${projectGroup}";
-                public static final String GRADLE_VERSION = "${gradle.gradleVersion}";
-                public static final Instant BUILD_TIMESTAMP = Instant.parse("${Instant.now()}");
-                public static final String GIT_BRANCH = "${'git rev-parse --abbrev-ref HEAD'.execute().text.trim()}";
-                public static final String GIT_COMMIT = "${'git rev-parse --short HEAD'.execute().text.trim()}";
+                public static final String APPLICATION_GROUP = "${applicationGroup}";
+                public static final String GRADLE_VERSION = "${gradleVersion}";
+                public static final Instant BUILD_TIMESTAMP = Instant.ofEpochSecond(${gitCommitEpochSeconds.get()}L);
+                public static final String GIT_BRANCH = "${gitBranch.get()}";
+                public static final String GIT_COMMIT = "${gitCommit.get()}";
             }
         """.stripIndent()
     }
@@ -80,14 +96,11 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xlint:all', '-Werror']
 }
 
-compileJava {
-    dependsOn generateBuildInfo
-}
-
 sourceSets {
     main {
         java {
-            srcDirs += buildDirectory
+            // Passing the task (not just the directory) also makes compileJava depend on it
+            srcDir(generateBuildInfo)
         }
     }
 }
@@ -101,7 +114,7 @@ tasks.named('test') {
 def jacocoExcludes = ['com/ruchij/build/**']
 
 jacoco {
-    toolVersion = jacocoVersion
+    toolVersion = libs.versions.jacoco.get()
 }
 
 distTar {
@@ -135,7 +148,7 @@ jacocoTestCoverageVerification {
 check.dependsOn jacocoTestCoverageVerification
 
 checkstyle {
-    toolVersion = checkstyleVersion
+    toolVersion = libs.versions.checkstyle.get()
     configFile = rootProject.file('config/checkstyle/checkstyle.xml')
 }
 
@@ -143,7 +156,7 @@ spotbugs {
     excludeFilter = rootProject.file('config/spotbugs/exclude.xml')
 }
 
-tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
     reports {
         html.required = true
         xml.required = true

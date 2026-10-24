@@ -22,7 +22,9 @@
 - name: Gather git information
   import_tasks: tasks/git-info.yml
 
+# CI passes prebuilt_distribution=true after downloading the archive that compile-and-test built and tested
 - name: Clean and build gradle project
+  when: not (prebuilt_distribution | default(false) | bool)
   shell: cd ../ && ./gradlew clean && ./gradlew :{{ app }}:distTar
 
 - name: Generate the Dockerfile
@@ -45,7 +47,10 @@
   when: publish
   block:
     - name: Login to GitHub container registry
-      command: docker login ghcr.io -u USERNAME -p {{ access_token }}
+      no_log: true
+      command: docker login ghcr.io -u USERNAME --password-stdin
+      args:
+        stdin: "{{ access_token }}"
       vars:
         access_token: "{{ lookup('aws_ssm', '/github/packages/read-write-token', region='ap-southeast-2') }}"
 

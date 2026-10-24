@@ -4,13 +4,16 @@
 - name: Gather git information
   import_tasks: tasks/git-info.yml
 
-- set_fact:
+- name: Fetch GHCR pull credentials
+  no_log: true
+  set_fact:
     ghcr_credentials: "{{ lookup('aws_ssm', '/github/ghcr/docker-config', region='ap-southeast-2') }}"
 
 - name: Fetch the K8s config
   import_tasks: tasks/k8s-config.yml
 
 - name: Render K8s resource files
+  no_log: true
   template:
     src: "{{ item }}"
     dest: "{{ k8s_output_dir }}/{{ item | basename }}"

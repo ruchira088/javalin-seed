@@ -7,6 +7,9 @@
         k8s_namespace: javalin-seed-staging
         hostname: staging.javalin-seed.home.ruchij.com
         aws_ssm_k8s_config: /infrastructure/dev/k8s/config
+        allowed_origins: ["https://*.ruchij.com", "https://*.home.ruchij.com"]
+        min_replicas: 1
+        app_log_level: DEBUG
 
     - name: Set config values and secrets
       import_tasks: tasks/configs-and-secrets.yml

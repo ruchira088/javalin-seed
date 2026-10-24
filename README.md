@@ -8,7 +8,8 @@ A template repository for bootstrapping a Java HTTP API service. It ships with e
 - **OpenAPI** spec generation (annotation processor) plus a bundled **Swagger UI**. Spec is served at `/openapi.json`.
 - **Typesafe Config** for layered configuration via `application.conf` and environment variables.
 - **Logback** with [logstash-logback-encoder](https://github.com/logfellow/logstash-logback-encoder) for JSON logs.
-- **`/service/info` health endpoint** that reports build metadata (name, group, git branch/commit, build timestamp, Gradle version, JVM properties) — populated at compile time by a `generateBuildInfo` Gradle task.
+- **`/service/info` endpoint** that reports build metadata (name, group, git branch/commit, commit timestamp, Gradle version, JVM properties) — populated at compile time by a `generateBuildInfo` Gradle task — and a lightweight **`/service/health`** endpoint for the Kubernetes probes.
+- **Request logging and correlation IDs**: one access-log line per request, tagged with the request's `X-Correlation-ID`. Unhandled exceptions are logged with their stack trace and return a generic 500.
 - **Quality gates**: Checkstyle, SpotBugs, JaCoCo coverage, and `-Werror -Xlint:all`. The [Gradle Versions plugin](https://github.com/ben-manes/gradle-versions-plugin) reports outdated dependencies.
 - **Tests**: JUnit 6 (Jupiter) + Mockito, with end-to-end tests against a real Javalin instance.
 - **CI/CD**: GitHub Actions pipeline (`.github/workflows/build-pipeline.yml`) and Ansible playbooks (`playbooks/`) that build a Docker image and deploy it to Kubernetes (dev / staging / production). Per-branch dev environments and their GHCR images are torn down automatically when the branch is deleted or its PR is merged (`.github/workflows/cleanup-dev-environment.yml`).
@@ -44,17 +45,18 @@ api/                       Application module (Gradle subproject)
     web/
       Routes.java          Top-level endpoint group
       routes/              Route handlers
-      middleware/          ExceptionMapper
+      middleware/          ExceptionMapper, CorrelationId, RequestLogging
       responses/           Shared response shapes
     utils/                 JSON, logging utilities
   src/main/resources/      application.conf, logback.xml
-  src/test/java/com/ruchij/  JUnit 5 + Mockito tests
+  src/test/java/com/ruchij/  JUnit Jupiter + Mockito tests
   build.gradle             Module build (also defines generateBuildInfo)
 config/                    Checkstyle and SpotBugs configuration
 playbooks/                 Ansible playbooks + K8s manifests + Dockerfile.j2
 scripts/init-template.sh   One-shot template initializer (deleted after use)
 settings.gradle            rootProject.name lives here
-gradle.properties          Centralised dependency versions
+gradle/libs.versions.toml  Centralised dependency versions (Gradle version catalog)
+gradle.properties          Gradle settings (configuration cache, build cache)
 ```
 
 ## Local development
@@ -65,7 +67,7 @@ Requirements: **JDK 25**.
 ./gradlew build           # compile + test + checkstyle + spotbugs
 ./gradlew test            # tests + JaCoCo report
 ./gradlew run             # start the API on http://localhost:8080
-./gradlew dependencyUpdates  # report newer versions of dependencies pinned in gradle.properties
+./gradlew dependencyUpdates  # report newer versions of dependencies pinned in gradle/libs.versions.toml
 ```
 
 Configuration is read from `api/src/main/resources/application.conf` and overridable via environment variables:
@@ -73,11 +75,12 @@ Configuration is read from `api/src/main/resources/application.conf` and overrid
 | Variable               | Default | Notes                                       |
 |------------------------|---------|---------------------------------------------|
 | `HTTP_PORT`            | `8080`  | Port the server binds to.                   |
-| `HTTP_ALLOWED_ORIGINS` | unset   | Comma-separated CORS origins, in addition to the localhost defaults. |
+| `HTTP_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Comma-separated CORS origins (wildcard subdomains such as `https://*.example.com` are allowed). Replaces the default; set per environment in `playbooks/{dev,staging,production}-deploy.yml`. Empty disables CORS. |
 
 ### Endpoints
 
 - `GET /service/info` — service + build metadata.
+- `GET /service/health` — `{"status":"ok"}`; used by the Kubernetes probes.
 - `GET /openapi.json` — OpenAPI 3 specification.
 - `GET /swagger` — Swagger UI.
 
@@ -86,7 +89,7 @@ Configuration is read from `api/src/main/resources/application.conf` and overrid
 The repository wires up a full GitHub Actions → Docker → Kubernetes pipeline. To use it for your project:
 
 1. Update the Docker image owner in `playbooks/tasks/build-and-publish-docker-image.yml` (the registry path defaults to `ghcr.io/ruchira088/...`).
-2. Review the K8s manifests under `playbooks/k8s/` (namespace, deployment, service, ingress, certificate, autoscaler, configmaps, secrets) and the Ansible variables in `playbooks/{dev,staging,production}-deploy.yml`.
+2. Review the K8s manifests under `playbooks/k8s/` (namespace, deployment, service, ingress, certificate, autoscaler, pod disruption budget, configmaps, secrets) and the Ansible variables in `playbooks/{dev,staging,production}-deploy.yml` (`allowed_origins`, `min_replicas`, `app_log_level`).
 3. Configure the AWS / GHCR credentials referenced by `.github/workflows/build-pipeline.yml`.
 
 ## License

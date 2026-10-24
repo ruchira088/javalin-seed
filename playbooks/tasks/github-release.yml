@@ -25,6 +25,7 @@
     tag_name: "{{ ansible_facts['date_time']['date'] }}.{{ git_commit }}"
 
 - name: Generate release notes
+  no_log: true
   uri:
     url: https://api.github.com/repos/{{ github_repo }}/releases
     method: POST

@@ -3,6 +3,7 @@ package com.ruchij.web.routes;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.web.responses.ErrorResponse;
+import com.ruchij.web.responses.HealthCheckResponse;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.openapi.HttpMethod;
 import io.javalin.openapi.OpenApi;
@@ -24,6 +25,24 @@ public class ServiceRoute implements EndpointGroup {
     @Override
     public void addEndpoints() {
         path("/info", () -> get(this::getServiceInfo));
+        path("/health", () -> get(this::getHealth));
+    }
+
+    @OpenApi(
+        path = "/service/health",
+        methods = {HttpMethod.GET},
+        summary = "Lightweight health check used by the Kubernetes probes",
+        tags = {"Service"},
+        responses = {
+            @OpenApiResponse(
+                status = "200",
+                description = "The service is up",
+                content = @OpenApiContent(from = HealthCheckResponse.class)
+            )
+        }
+    )
+    private void getHealth(Context context) {
+        context.status(HttpStatus.OK).json(HealthCheckResponse.OK);
     }
 
     @OpenApi(

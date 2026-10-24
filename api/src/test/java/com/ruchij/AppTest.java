@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class AppTest {
 
@@ -54,8 +55,23 @@ class AppTest {
         Javalin app = App.javalin(routes, customOrigins);
 
         JavalinTest.test(app, (server, client) -> {
-            Response response = client.get("/service/info");
+            Response allowed = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
+            assertEquals(200, allowed.code());
+            assertEquals("https://custom.example.com", allowed.headers().get("Access-Control-Allow-Origin").getFirst());
+
+            Response disallowed = client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
+            assertNull(disallowed.headers().get("Access-Control-Allow-Origin"));
+        });
+    }
+
+    @Test
+    void shouldNotAllowAnyOriginWhenNoneAreConfigured() {
+        Javalin app = App.javalin(createMockRoutes(), List.of());
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
             assertEquals(200, response.code());
+            assertNull(response.headers().get("Access-Control-Allow-Origin"));
         });
     }
 

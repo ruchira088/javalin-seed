@@ -57,4 +57,23 @@ class ServiceRouteTest {
             );
         }));
     }
+
+    @Test
+    void shouldReturnHealthWithoutCallingHealthService() {
+        HealthService healthService = Mockito.mock(HealthService.class);
+        Routes routes = new Routes(healthService);
+
+        JavalinTest.test(App.javalin(routes, List.of()), ((server, client) -> {
+            Response response = client.get("/service/health");
+            assertEquals(200, response.code());
+
+            assertEquals(
+                OBJECT_MAPPER.readTree("""
+                    {"status": "ok"}
+                    """),
+                OBJECT_MAPPER.readTree(response.body().string())
+            );
+            Mockito.verifyNoInteractions(healthService);
+        }));
+    }
 }

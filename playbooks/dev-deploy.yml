@@ -10,6 +10,10 @@
         k8s_namespace: "javalin-seed-{{ git_branch }}"
         hostname: "{{ git_branch }}.javalin-seed.home.ruchij.com"
         aws_ssm_k8s_config: /infrastructure/dev/k8s/config
+        # Dev also accepts local front-end dev servers; staging and production do not
+        allowed_origins: ["http://localhost:3000", "http://localhost:5173", "https://*.ruchij.com", "https://*.home.ruchij.com"]
+        min_replicas: 1
+        app_log_level: TRACE
 
     - name: Set config values and secrets
       import_tasks: tasks/configs-and-secrets.yml

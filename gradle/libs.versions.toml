@@ -1,17 +1,17 @@
 [versions]
-typesafe-config = "1.4.9"
-javalin = "7.2.3"
-javalin-openapi = "7.2.3"
-logback = "1.6.5"
+typesafe-config = "1.4.10"
+javalin = "7.2.4"
+javalin-openapi = "7.2.4"
+logback = "1.6.6"
 logstash-logback = "9.0"
 
 junit = "6.1.3"
 mockito = "5.24.0"
 
-versions-plugin = "0.66.0"
+versions-plugin = "0.67.0"
 spotbugs-plugin = "6.5.13"
-checkstyle = "14.3.0"
-jacoco = "0.8.15"
+checkstyle = "14.4.0"
+jacoco = "0.8.16"
 
 [libraries]
 javalin-bundle = { module = "io.javalin:javalin-bundle", version.ref = "javalin" }

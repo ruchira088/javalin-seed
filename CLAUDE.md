@@ -12,7 +12,7 @@ config, and deployment playbooks. See `README.md` for the template-initialisatio
 
 ## Commands
 
-Requires JDK 25. The wrapper pins Gradle 9.8.2.
+Requires JDK 25. The wrapper pins Gradle 9.9.1.
 
 ```bash
 ./gradlew build                 # compile + test + Checkstyle + SpotBugs + JaCoCo (what to run before pushing)

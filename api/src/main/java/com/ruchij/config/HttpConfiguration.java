@@ -5,7 +5,7 @@ import com.typesafe.config.Config;
 import java.util.Arrays;
 import java.util.List;
 
-public record HttpConfiguration(int port, List<String> allowedOrigins) {
+public record HttpConfiguration(int port, List<String> allowedOrigins, boolean allowCredentials) {
     public static HttpConfiguration parse(Config config) {
         int port = config.getInt("port");
 
@@ -17,6 +17,8 @@ public record HttpConfiguration(int port, List<String> allowedOrigins) {
                 .filter(host -> !host.isEmpty())
                 .toList();
 
-        return new HttpConfiguration(port, allowedOrigins);
+        boolean allowCredentials = ConfigReaders.optionalConfig(() -> config.getBoolean("allow-credentials")).orElse(false);
+
+        return new HttpConfiguration(port, allowedOrigins, allowCredentials);
     }
 }

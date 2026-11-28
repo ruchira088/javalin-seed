@@ -91,7 +91,9 @@ a `kube-probe/` User-Agent are logged at DEBUG.
 
 **CORS**: origins come only from `http.allowed-origins` (`HTTP_ALLOWED_ORIGINS`), whose default in `application.conf`
 is the localhost dev servers; each deploy playbook sets `allowed_origins`. An empty list leaves the CORS plugin
-disabled — Javalin's plugin throws if enabled with no origins.
+disabled — Javalin's plugin throws if enabled with no origins. `http.allow-credentials` (`HTTP_ALLOW_CREDENTIALS`,
+playbook `allow_credentials`) defaults to `false`; the origins include `*.ruchij.com` wildcards, so turning it on lets
+every matching subdomain make cookie-bearing requests.
 
 **Configuration**: Typesafe Config. `application.conf` uses the `key = ${?ENV_VAR}` idiom so environment
 variables override file values. Optional keys are read through `ConfigReaders.optionalConfig(...)`, which turns
@@ -138,5 +140,5 @@ CI builds once: `compile-and-test` uploads `api.tar` as the `api-distribution` a
 downloads it and runs the playbook with `-e prebuilt_distribution=true`, which skips the Gradle build. The image
 therefore contains exactly the archive that passed `check`. The pod runs as UID 1001 with a read-only root filesystem
 (`/tmp` is an `emptyDir`), so the app must not write anywhere else. Per-environment knobs (`allowed_origins`,
-`min_replicas`, `app_log_level`) live in `playbooks/{dev,staging,production}-deploy.yml`. Tasks that handle secrets
+`allow_credentials`, `min_replicas`, `app_log_level`) live in `playbooks/{dev,staging,production}-deploy.yml`. Tasks that handle secrets
 carry `no_log: true` — keep it on any new task that touches SSM values, and don't add `-vvv` back to the workflows.

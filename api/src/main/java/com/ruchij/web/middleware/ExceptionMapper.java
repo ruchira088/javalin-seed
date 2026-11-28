@@ -14,6 +14,7 @@ import io.javalin.validation.ValidationError;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,11 @@ public class ExceptionMapper {
         };
     }
 
-    static void respond(Context context, HttpStatus httpStatus, String detail, Map<String, List<String>> errors) {
+    static void respond(
+            Context context,
+            HttpStatus httpStatus,
+            @Nullable String detail,
+            @Nullable Map<String, List<String>> errors) {
         ProblemDetail problemDetail = new ProblemDetail(
                 ProblemDetail.DEFAULT_TYPE,
                 httpStatus.getMessage(),

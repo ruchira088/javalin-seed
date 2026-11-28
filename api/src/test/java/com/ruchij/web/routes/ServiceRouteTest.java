@@ -27,7 +27,7 @@ class ServiceRouteTest {
 
         Routes routes = new Routes(healthService);
 
-        JavalinTestSupport.test(App.javalin(routes, List.of()), ((server, client) -> {
+        JavalinTestSupport.test(App.javalin(routes, List.of()), (server, client) -> {
             Response response = client.get("/service/info");
             assertEquals(200, response.code());
 
@@ -46,7 +46,7 @@ class ServiceRouteTest {
             assertEquals(
                     OBJECT_MAPPER.readTree(expectedResponseBody),
                     OBJECT_MAPPER.readTree(response.body().string()));
-        }));
+        });
     }
 
     @Test
@@ -54,7 +54,7 @@ class ServiceRouteTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Routes routes = new Routes(healthService);
 
-        JavalinTestSupport.test(App.javalin(routes, List.of()), ((server, client) -> {
+        JavalinTestSupport.test(App.javalin(routes, List.of()), (server, client) -> {
             Response response = client.get("/service/health");
             assertEquals(200, response.code());
 
@@ -64,6 +64,6 @@ class ServiceRouteTest {
                     """),
                     OBJECT_MAPPER.readTree(response.body().string()));
             Mockito.verifyNoInteractions(healthService);
-        }));
+        });
     }
 }

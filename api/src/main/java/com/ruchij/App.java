@@ -46,7 +46,7 @@ public class App {
 
         PrometheusMeterRegistry meterRegistry = MetricsRegistry.create(buildInformation.name());
 
-        Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
+        Routes routes = routes(properties, buildInformation, clock);
 
         Javalin app = javalin(routes, applicationConfiguration.httpConfiguration(), meterRegistry);
         app.start(applicationConfiguration.httpConfiguration().port());
@@ -134,11 +134,8 @@ public class App {
         });
     }
 
-    private static Routes routes(
-            ApplicationConfiguration applicationConfiguration,
-            Properties properties,
-            BuildInformation buildInformation,
-            Clock clock) {
+    // Services are wired here (there is no DI framework); pass in whatever configuration they need.
+    private static Routes routes(Properties properties, BuildInformation buildInformation, Clock clock) {
         HealthServiceImpl healthService = new HealthServiceImpl(clock, properties, buildInformation);
 
         return new Routes(healthService);

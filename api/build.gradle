@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.versions)
     alias(libs.plugins.spotbugs)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.errorprone)
 }
 
 group = 'com.ruchij'
@@ -21,6 +22,15 @@ repositories {
 
 dependencies {
     annotationProcessor libs.javalin.openapi.annotation.processor
+
+    errorprone(
+        libs.errorprone.core,
+        libs.nullaway
+    )
+
+    // @Nullable / @NullMarked for NullAway; annotations only, so not needed at runtime
+    compileOnly libs.jspecify
+    testCompileOnly libs.jspecify
 
     implementation(
         platform(libs.jackson.bom),
@@ -102,6 +112,20 @@ tasks.withType(JavaCompile).configureEach {
     // `processing` is excluded because, with the OpenAPI annotation processor on the path, javac warns that "no
     // processor claimed" ordinary runtime annotations such as Jackson's @JsonInclude, which -Werror would make fatal.
     options.compilerArgs += ['-Xlint:all,-processing', '-Werror']
+
+    // Error Prone runs on every compile; with -Werror its warnings fail the build too. NullAway treats com.ruchij as
+    // non-null by default, so anything that may be null must be annotated @Nullable (org.jspecify).
+    options.errorprone {
+        disableWarningsInGeneratedCode = true
+        excludedPaths = '.*/build/generated/.*'
+        error('NullAway')
+        option('NullAway:AnnotatedPackages', 'com.ruchij')
+    }
+}
+
+// Tests deliberately pass nulls and use mocks, so NullAway is off there; the rest of Error Prone still applies.
+tasks.named('compileTestJava') {
+    options.errorprone.disable('NullAway')
 }
 
 sourceSets {

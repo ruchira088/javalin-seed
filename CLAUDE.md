@@ -38,6 +38,11 @@ Reports land under `api/build/reports/` (`tests/test/`, `jacoco/test/html/`, `ch
 - **`-Xlint:all,-processing -Werror`** is set for every `JavaCompile` task: any compiler warning (deprecation,
   unchecked, unused varargs…) fails the build. Only `processing` is off, because with the OpenAPI annotation processor
   present javac otherwise rejects runtime annotations like `@JsonInclude` as "not claimed by any processor".
+- **Error Prone + NullAway** run on every compile (`net.ltgt.errorprone`), and `-Werror` makes their warnings fatal.
+  NullAway treats `com.ruchij` as non-null by default: a parameter, field, return or record component that can be
+  null must be annotated `@org.jspecify.annotations.Nullable` (compile-only dependency). NullAway is disabled for
+  test sources; the rest of Error Prone still applies there. Suppress a check only with a reason, e.g.
+  `@SuppressWarnings("TypeParameterUnusedInFormals") // signature fixed by Javalin's JsonMapper`.
 - **JaCoCo coverage floor**: `check` runs `jacocoTestCoverageVerification`, which fails the build if line coverage
   drops below 90% (the generated `com.ruchij.build` package is excluded). Compilation uses a Gradle JDK toolchain
   (`languageVersion = 25`), so a JDK 25 must be installed locally — Gradle auto-detects SDKMAN/Homebrew installs.

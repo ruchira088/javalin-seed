@@ -89,6 +89,10 @@ the logstash encoder includes MDC, so it appears in every log line for the reque
 it *after* the `after` handlers have cleared the MDC, so it restores the ID from the `Context` attribute. Requests with
 a `kube-probe/` User-Agent are logged at DEBUG.
 
+**Security headers**: `web/middleware/SecurityHeaders` (a `before` handler, so errors and 404s get them too) sets
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and HSTS. There is no CSP
+because Swagger UI needs inline scripts.
+
 **CORS**: origins come only from `http.allowed-origins` (`HTTP_ALLOWED_ORIGINS`), whose default in `application.conf`
 is the localhost dev servers; each deploy playbook sets `allowed_origins`. An empty list leaves the CORS plugin
 disabled — Javalin's plugin throws if enabled with no origins. `http.allow-credentials` (`HTTP_ALLOW_CREDENTIALS`,

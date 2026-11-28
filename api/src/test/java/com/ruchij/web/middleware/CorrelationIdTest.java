@@ -6,6 +6,7 @@ import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.web.Routes;
 import io.javalin.http.Context;
 import io.javalin.testtools.JavalinTest;
+import io.javalin.testtools.Request;
 import io.javalin.testtools.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -13,8 +14,10 @@ import org.slf4j.MDC;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -145,6 +148,73 @@ class CorrelationIdTest {
                 client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, maxLengthId));
 
             assertEquals(maxLengthId, correlationIdHeader(response));
+        });
+    }
+
+    private static final String TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736";
+
+    @Test
+    void shouldUseTraceIdFromTraceparentWhenCorrelationHeaderIsAbsent() {
+        assertCorrelationIdFor(request -> request.header(CorrelationId.TRACEPARENT_HEADER, "00-" + TRACE_ID + "-00f067aa0ba902b7-01"), TRACE_ID);
+    }
+
+    @Test
+    void shouldPreferExplicitCorrelationIdOverTraceparent() {
+        assertCorrelationIdFor(
+            request -> request
+                .header(CorrelationId.HEADER_NAME, "explicit-id")
+                .header(CorrelationId.TRACEPARENT_HEADER, "00-" + TRACE_ID + "-00f067aa0ba902b7-01"),
+            "explicit-id"
+        );
+    }
+
+    @Test
+    void shouldUseTraceparentWhenCorrelationHeaderIsInvalid() {
+        assertCorrelationIdFor(
+            request -> request
+                .header(CorrelationId.HEADER_NAME, "bad id with spaces")
+                .header(CorrelationId.TRACEPARENT_HEADER, "00-" + TRACE_ID + "-00f067aa0ba902b7-01"),
+            TRACE_ID
+        );
+    }
+
+    @Test
+    void shouldIgnoreMalformedOrAllZeroTraceparent() {
+        for (String traceparent : List.of(
+            "00-" + TRACE_ID.toUpperCase(Locale.ROOT) + "-00f067aa0ba902b7-01",
+            "00-00000000000000000000000000000000-00f067aa0ba902b7-01",
+            "00-" + TRACE_ID + "-0000000000000000-01",
+            "ff-" + TRACE_ID + "-00f067aa0ba902b7-01",
+            "00-" + TRACE_ID + "-00f067aa0ba902b7",
+            "garbage"
+        )) {
+            HealthService healthService = Mockito.mock(HealthService.class);
+            Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
+
+            JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+                Response response = client.get("/service/info", request -> request.header(CorrelationId.TRACEPARENT_HEADER, traceparent));
+
+                String correlationId = correlationIdHeader(response);
+                assertEquals(correlationId, UUID.fromString(correlationId).toString(), traceparent);
+            });
+        }
+    }
+
+    @Test
+    void shouldAcceptFutureTraceparentVersionsWithExtraFields() {
+        assertCorrelationIdFor(
+            request -> request.header(CorrelationId.TRACEPARENT_HEADER, "01-" + TRACE_ID + "-00f067aa0ba902b7-01-extra"),
+            TRACE_ID
+        );
+    }
+
+    private static void assertCorrelationIdFor(Consumer<Request.Builder> requestCustomizer, String expected) {
+        HealthService healthService = Mockito.mock(HealthService.class);
+        Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
+
+        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+            Response response = client.get("/service/info", requestCustomizer);
+            assertEquals(expected, correlationIdHeader(response));
         });
     }
 

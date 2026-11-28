@@ -11,6 +11,7 @@ import com.ruchij.web.middleware.CorrelationId;
 import com.ruchij.web.middleware.ExceptionMapper;
 import com.ruchij.web.middleware.RequestLogging;
 import com.ruchij.web.middleware.RequestMetrics;
+import com.ruchij.web.middleware.SecurityHeaders;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.javalin.Javalin;
@@ -119,6 +120,7 @@ public class App {
 
             javalinConfig.routes.apiBuilder(routes);
             CorrelationId.register(javalinConfig.routes);
+            SecurityHeaders.register(javalinConfig.routes);
             ExceptionMapper.handle(javalinConfig.routes);
             javalinConfig.requestLogger.http((context, executionTimeMs) -> {
                 RequestLogging.log(context, executionTimeMs);

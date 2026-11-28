@@ -20,6 +20,18 @@ spec:
         prometheus.io/port: "9090"
         prometheus.io/path: /metrics
     spec:
+      # The app never calls the Kubernetes API, so don't mount a service-account token an attacker could use
+      automountServiceAccountToken: false
+      # Prefer one pod per node so a node failure or drain doesn't take out every replica (the PodDisruptionBudget only
+      # helps if the pods are on different nodes). ScheduleAnyway keeps single-node clusters schedulable.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: javalin-seed
+              branch: "{{ git_branch }}"
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001

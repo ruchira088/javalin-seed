@@ -290,7 +290,9 @@ class ExceptionMapperTest {
         List<String> contentTypes = response.headers().get("Content-Type");
         assertNotNull(contentTypes, "missing Content-Type");
         String contentType = contentTypes.getFirst();
-        assertEquals(ProblemDetail.CONTENT_TYPE, contentType.split(";")[0].trim(), contentType);
+        int parametersStart = contentType.indexOf(';');
+        String mediaType = parametersStart < 0 ? contentType : contentType.substring(0, parametersStart);
+        assertEquals(ProblemDetail.CONTENT_TYPE, mediaType.trim(), contentType);
     }
 
     private static void assertProblem(Response response, String expectedDetail) throws java.io.IOException {

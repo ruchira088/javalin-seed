@@ -27,6 +27,7 @@ public final class RequestBodyJsonMapper implements JsonMapper {
     }
 
     @Override
+    @SuppressWarnings("TypeParameterUnusedInFormals") // signature fixed by Javalin's JsonMapper
     public <T> T fromJsonString(String json, Type targetType) {
         try {
             return delegate.fromJsonString(json, targetType);
@@ -36,6 +37,7 @@ public final class RequestBodyJsonMapper implements JsonMapper {
     }
 
     @Override
+    @SuppressWarnings("TypeParameterUnusedInFormals") // signature fixed by Javalin's JsonMapper
     public <T> T fromJsonStream(InputStream json, Type targetType) {
         try {
             return delegate.fromJsonStream(json, targetType);

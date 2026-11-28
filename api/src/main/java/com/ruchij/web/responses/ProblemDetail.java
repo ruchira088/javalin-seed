@@ -3,6 +3,7 @@ package com.ruchij.web.responses;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An RFC 9457 "problem details" error body, served as {@value #CONTENT_TYPE}.
@@ -17,10 +18,10 @@ public record ProblemDetail(
         String type,
         String title,
         int status,
-        String detail,
+        @Nullable String detail,
         String instance,
-        String correlationId,
-        Map<String, List<String>> errors) {
+        @Nullable String correlationId,
+        @Nullable Map<String, List<String>> errors) {
     public static final String CONTENT_TYPE = "application/problem+json";
     public static final String DEFAULT_TYPE = "about:blank";
 

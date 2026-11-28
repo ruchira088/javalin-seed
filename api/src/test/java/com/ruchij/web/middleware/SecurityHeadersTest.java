@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.web.Routes;
-import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ class SecurityHeadersTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenThrow(new IllegalStateException("boom"));
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             for (String path : List.of("/service/health", "/service/info", "/does-not-exist", "/swagger")) {
                 Response response = client.get(path);
 

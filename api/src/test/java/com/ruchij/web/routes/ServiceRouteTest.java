@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.web.Routes;
-import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import java.time.Instant;
 import java.util.List;
@@ -27,7 +27,7 @@ class ServiceRouteTest {
 
         Routes routes = new Routes(healthService);
 
-        JavalinTest.test(App.javalin(routes, List.of()), ((server, client) -> {
+        JavalinTestSupport.test(App.javalin(routes, List.of()), ((server, client) -> {
             Response response = client.get("/service/info");
             assertEquals(200, response.code());
 
@@ -54,7 +54,7 @@ class ServiceRouteTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Routes routes = new Routes(healthService);
 
-        JavalinTest.test(App.javalin(routes, List.of()), ((server, client) -> {
+        JavalinTestSupport.test(App.javalin(routes, List.of()), ((server, client) -> {
             Response response = client.get("/service/health");
             assertEquals(200, response.code());
 

@@ -12,10 +12,10 @@ import com.ruchij.config.ManagementConfiguration;
 import com.ruchij.metrics.MetricsRegistry;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import io.javalin.Javalin;
-import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -45,7 +45,7 @@ class AppTest {
         Routes routes = createMockRoutes();
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/service/info");
             assertEquals(200, response.code());
         });
@@ -57,7 +57,7 @@ class AppTest {
         List<String> customOrigins = List.of("https://custom.example.com");
         Javalin app = App.javalin(routes, customOrigins);
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response allowed =
                     client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
             assertEquals(200, allowed.code());
@@ -73,7 +73,7 @@ class AppTest {
     void shouldOmitCorsCredentialsByDefault() {
         Javalin app = App.javalin(createMockRoutes(), List.of("https://custom.example.com"));
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response =
                     client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
             assertEquals("https://custom.example.com", header(response, "Access-Control-Allow-Origin"));
@@ -87,7 +87,7 @@ class AppTest {
                 new HttpConfiguration(0, List.of("https://custom.example.com"), true, true);
         Javalin app = App.javalin(createMockRoutes(), httpConfiguration, new SimpleMeterRegistry());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response =
                     client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
             assertEquals("true", header(response, "Access-Control-Allow-Credentials"));
@@ -98,7 +98,7 @@ class AppTest {
     void shouldNotAllowAnyOriginWhenNoneAreConfigured() {
         Javalin app = App.javalin(createMockRoutes(), List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response =
                     client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
             assertEquals(200, response.code());
@@ -111,7 +111,7 @@ class AppTest {
         Routes routes = createMockRoutes();
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/service/info");
             JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
             assertNotNull(json.get("serviceName"));
@@ -130,7 +130,7 @@ class AppTest {
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/service/info");
             JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
             assertEquals("2024-01-15T10:30:00Z", json.get("currentTimestamp").asText());
@@ -143,7 +143,7 @@ class AppTest {
         Routes routes = createMockRoutes();
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/openapi.json");
             assertEquals(200, response.code());
 
@@ -158,7 +158,7 @@ class AppTest {
         HttpConfiguration httpConfiguration = new HttpConfiguration(0, List.of(), false, false);
         Javalin app = App.javalin(createMockRoutes(), httpConfiguration, new SimpleMeterRegistry());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             assertEquals(404, client.get("/openapi.json").code());
             assertEquals(404, client.get("/swagger").code());
             assertEquals(200, client.get("/service/info").code());
@@ -170,7 +170,7 @@ class AppTest {
         Routes routes = createMockRoutes();
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/swagger");
             assertEquals(200, response.code());
         });
@@ -207,7 +207,7 @@ class AppTest {
     void shouldServePrometheusMetricsFromManagementApp() {
         PrometheusMeterRegistry registry = MetricsRegistry.create("test-app");
 
-        JavalinTest.test(App.managementJavalin(registry), (server, client) -> {
+        JavalinTestSupport.test(App.managementJavalin(registry), (server, client) -> {
             Response response = client.get("/metrics");
             assertEquals(200, response.code());
             assertEquals(App.PROMETHEUS_CONTENT_TYPE, header(response, "Content-Type"));

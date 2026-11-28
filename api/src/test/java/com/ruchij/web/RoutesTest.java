@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.web.routes.ServiceRoute;
 import io.javalin.Javalin;
-import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import java.time.Instant;
 import java.util.List;
@@ -26,7 +26,7 @@ class RoutesTest {
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/service/info");
             assertEquals(200, response.code());
         });
@@ -43,7 +43,7 @@ class RoutesTest {
         Routes routes = new Routes(serviceRoute);
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/service/info");
             assertEquals(200, response.code());
         });

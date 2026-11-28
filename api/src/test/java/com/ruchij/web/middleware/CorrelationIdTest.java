@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.web.Routes;
 import io.javalin.http.Context;
-import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Request;
 import io.javalin.testtools.Response;
 import java.time.Instant;
@@ -37,7 +37,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response = client.get(
                     "/service/info", request -> request.header(CorrelationId.HEADER_NAME, "k8s-readiness-probe"));
 
@@ -51,7 +51,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response = client.get("/service/info");
 
             assertEquals(200, response.code());
@@ -66,7 +66,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response =
                     client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, "   "));
 
@@ -86,7 +86,7 @@ class CorrelationIdTest {
             return SERVICE_INFORMATION;
         });
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, "my-correlation-id"));
 
             assertEquals("my-correlation-id", mdcValueDuringRequest.get());
@@ -98,7 +98,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenThrow(new RuntimeException("boom"));
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response = client.get(
                     "/service/info", request -> request.header(CorrelationId.HEADER_NAME, "failing-request"));
 
@@ -112,7 +112,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response = client.get(
                     "/service/info",
                     request ->
@@ -128,7 +128,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response =
                     client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, "a".repeat(65)));
 
@@ -142,7 +142,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             String maxLengthId = "a".repeat(64);
             Response response =
                     client.get("/service/info", request -> request.header(CorrelationId.HEADER_NAME, maxLengthId));
@@ -188,7 +188,7 @@ class CorrelationIdTest {
             HealthService healthService = Mockito.mock(HealthService.class);
             Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-            JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+            JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
                 Response response = client.get(
                         "/service/info", request -> request.header(CorrelationId.TRACEPARENT_HEADER, traceparent));
 
@@ -210,7 +210,7 @@ class CorrelationIdTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation()).thenReturn(SERVICE_INFORMATION);
 
-        JavalinTest.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
+        JavalinTestSupport.test(App.javalin(new Routes(healthService), List.of()), (server, client) -> {
             Response response = client.get("/service/info", requestCustomizer);
             assertEquals(expected, correlationIdHeader(response));
         });

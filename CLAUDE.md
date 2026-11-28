@@ -128,8 +128,11 @@ and Ingress do not expose.
 
 ## Tests
 
-JUnit Jupiter (BOM 6.x) + Mockito. HTTP-level tests use `JavalinTest.test(App.javalin(routes, List.of()), ...)`
-with a mocked `HealthService`, so they exercise real routing, JSON, and exception mapping without a fixed port.
+JUnit Jupiter (BOM 6.x) + Mockito. HTTP-level tests use `JavalinTestSupport.test(App.javalin(routes, List.of()), ...)`
+(`com.ruchij.testing`) with a mocked `HealthService`, so they exercise real routing, JSON, and exception mapping
+without a fixed port. Use it rather than `JavalinTest.test` directly: it gives each test its own `HttpClient`, whereas
+javalin-testtools shares one static, connection-pooling client across the whole JVM. `junit-platform.properties` sets
+a 60 s default timeout per test, so a hung request fails with a `TimeoutException` instead of stalling the build.
 `api/src/test/resources/application.conf` overrides the port to `19999` (management `19998`);
 `AppTest.shouldStartServerWithMainMethod` depends on those values.
 

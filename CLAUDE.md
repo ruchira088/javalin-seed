@@ -142,7 +142,10 @@ is the Docker tag. `.github/workflows/cleanup-dev-environment.yml` runs on branc
 `playbooks/dev-remove.yml`, which deletes that namespace (matched by name *and* `project`/`branch` labels) and the
 branch's GHCR image versions via `scripts/delete_ghcr_branch_images.py` (needs a classic PAT with `delete:packages`,
 read from SSM). `main`, `staging` and `production` are refused at both the workflow and playbook level.
-`scripts/test_*.py` are plain `unittest` tests, run by the `Test scripts` CI step.
+`scripts/test_*.py` are plain `unittest` tests, run by the `Test scripts` CI step; `test_init_template.py` runs
+`init-template.sh` against a throwaway repo. The script must stay portable to macOS (bash 3.2, BSD tools): no
+`mapfile`, and edit files with `perl -pi`, not `sed -i`. The `template-smoke-test` CI job renames the checkout to
+`smoke-test-api` and runs `./gradlew build` on the result, so any new hard-coded `javalin-seed` assumption fails CI.
 
 CI builds once: `compile-and-test` uploads `api.tar` as the `api-distribution` artifact, and `publish-docker-image`
 downloads it and runs the playbook with `-e prebuilt_distribution=true`, which skips the Gradle build. The image

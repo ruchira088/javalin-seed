@@ -63,8 +63,9 @@ routes, exception mapping) without starting it. There is no DI framework; servic
 
 **Routing**: `Routes` is the root `EndpointGroup`; it mounts sub-groups with `path("service", serviceRoute)`.
 To add an endpoint: create an `EndpointGroup` in `web/routes/`, annotate each handler with `@OpenApi` (the
-`openapi-annotation-processor` turns these into the `/openapi.json` spec at compile time — un-annotated handlers
-are silently missing from the spec), and mount it in `Routes.addEndpoints()`.
+`openapi-annotation-processor` turns these into the `/openapi.json` spec at compile time), and mount it in
+`Routes.addEndpoints()`. `web/OpenApiCompletenessTest` fails if any routed method + path is missing from the spec, so
+an un-annotated handler, or an `@OpenApi(path = ...)` that has drifted from its route, breaks the build.
 
 **Error handling**: throw one of the exceptions in `com.ruchij.exceptions` (`ValidationException` → 400,
 `ResourceNotFoundException` → 404, `ResourceConflictException` → 409); `web/middleware/ExceptionMapper` converts

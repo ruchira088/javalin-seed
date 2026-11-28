@@ -140,9 +140,14 @@ a 60 s default timeout per test, so a hung request fails with a `TimeoutExceptio
 
 `.github/workflows/build-pipeline.yml` runs on every push: `assemble` → `check` → publish Docker image (Ansible,
 `playbooks/`) → deploy. Non-`main` branches deploy to **dev**; `main` deploys to **staging** then **production**.
-The image (`playbooks/docker/Dockerfile.j2`) unpacks the `distTar` output (`api.tar`) and runs the
-`application`-plugin start script, with `JAVA_OPTS=-XX:MaxRAMPercentage=75` so the heap scales with the pod's memory
-limit; that script passes `-Dlogback.configurationFile=/opt/data/logback.xml`, so in
+The image (`playbooks/docker/Dockerfile.j2`) is multi-stage: a `jlink` stage builds a trimmed Java runtime from an
+explicit module list (measured with `-Xlog:class+load`; if new code throws `NoClassDefFoundError` for a `java.*`/`jdk.*`
+class, add its module there), which is copied onto `ubuntu:26.04` (the Temurin images' base). It unpacks the `distTar`
+output (`api.tar`) and then does an **AOT training run**: it starts the app, drives `/service/*`, the 404 path,
+the docs and `/metrics` over bash's `/dev/tcp`, and SIGTERMs it, so the JVM writes `app.aot` (JEP 514/515). That runs
+per platform during `buildx`, so the arm64 cache is trained under QEMU in CI. The start script then runs with
+`JAVA_OPTS=-XX:MaxRAMPercentage=75 -XX:AOTCache=…/app.aot` (heap scales with the pod's memory limit; a flag change that
+invalidates the cache only costs a warning and a normal start); that script passes `-Dlogback.configurationFile=/opt/data/logback.xml`, so in
 Kubernetes the Logback config comes from a mounted ConfigMap rather than the bundled `logback.xml`.
 
 Each non-`main` branch gets its own dev namespace, `javalin-seed-<branch>`, where `<branch>` is produced by

@@ -12,6 +12,7 @@ import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
+import com.ruchij.web.json.RequestBodyJsonMapper;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
 import io.javalin.json.JavalinJackson;
@@ -206,6 +207,76 @@ class ExceptionMapperTest {
             Response response = client.get("/explicit-404");
             assertEquals(404, response.code());
             assertEquals("Custom not found", response.body().string());
+        });
+    }
+
+    @Test
+    void shouldReturn404ForUnregisteredMethodOnExistingPath() {
+        HealthService healthService = Mockito.mock(HealthService.class);
+        Javalin app = App.javalin(new Routes(healthService), List.of());
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.post("/service/health", "");
+            assertEquals(404, response.code());
+
+            String expectedBody = """
+                {"error":"No matching routes were found for POST /service/health"}
+                """;
+            assertEquals(
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
+            );
+        });
+    }
+
+    @Test
+    void shouldReturn400ForMalformedJsonBody() {
+        assertBadRequestForBody("{not json");
+    }
+
+    @Test
+    void shouldReturn400ForBodyWithWrongFieldType() {
+        assertBadRequestForBody("""
+            {"serviceName":"svc","buildTimestamp":"not-a-timestamp"}
+            """);
+    }
+
+    private void assertBadRequestForBody(String body) {
+        Javalin app = Javalin.create(config -> {
+            config.jsonMapper(new RequestBodyJsonMapper(JsonUtils.OBJECT_MAPPER));
+            config.routes.post("/test", ctx -> ctx.json(ctx.bodyAsClass(ServiceInformation.class)));
+            ExceptionMapper.handle(config.routes);
+        });
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.post("/test", body);
+            assertEquals(400, response.code());
+
+            String expectedBody = """
+                {"error":"The request body could not be parsed"}
+                """;
+            assertEquals(
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
+            );
+        });
+    }
+
+    @Test
+    void shouldReturn404ForUnmatchedRouteWithoutAnyBeforeHandlers() {
+        Javalin app = createAppWithRoute(ctx -> ctx.result("ok"));
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.post("/test", "");
+            assertEquals(404, response.code());
+
+            String expectedBody = """
+                {"error":"No matching routes were found for POST /test"}
+                """;
+            assertEquals(
+                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
+                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
+            );
         });
     }
 }

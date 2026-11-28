@@ -5,6 +5,7 @@ import com.ruchij.service.health.HealthServiceImpl;
 import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
+import com.ruchij.web.json.RequestBodyJsonMapper;
 import com.ruchij.web.middleware.CorrelationId;
 import com.ruchij.web.middleware.ExceptionMapper;
 import com.ruchij.web.middleware.RequestLogging;
@@ -13,7 +14,6 @@ import com.typesafe.config.ConfigFactory;
 import io.javalin.Javalin;
 import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
-import io.javalin.json.JavalinJackson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +53,7 @@ public class App {
     public static Javalin javalin(Routes routes, List<String> allowedOrigins) {
         return Javalin.create(javalinConfig -> {
             javalinConfig.concurrency.useVirtualThreads = true;
-            javalinConfig.jsonMapper(new JavalinJackson(JsonUtils.OBJECT_MAPPER, true));
+            javalinConfig.jsonMapper(new RequestBodyJsonMapper(JsonUtils.OBJECT_MAPPER));
 
             // wait 7 seconds for existing requests to finish
             javalinConfig.jetty.modifyServer(server -> server.setStopTimeout(7_000));

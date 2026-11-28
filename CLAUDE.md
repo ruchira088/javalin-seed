@@ -69,7 +69,11 @@ are silently missing from the spec), and mount it in `Routes.addEndpoints()`.
 `ResourceNotFoundException` → 404, `ResourceConflictException` → 409); `web/middleware/ExceptionMapper` converts
 them to an `ErrorResponse` JSON body carrying the exception message, so those messages must be safe to show callers.
 Anything else becomes a 500 that is logged at ERROR with its stack trace and returns only a generic message. New
-exception types need a line in `ExceptionMapper.handle(RoutesConfig)`.
+exception types need a line in `ExceptionMapper.handle(RoutesConfig)`. Request bodies are read through
+`web/json/RequestBodyJsonMapper`, which turns any Jackson failure in `ctx.bodyAsClass(...)` into
+`InvalidRequestBodyException` (400) — Jackson errors raised elsewhere stay 500s. The 404 fallback answers only when
+`context.endpoints().lastHttpEndpoint()` is null (no GET/POST/... handler matched); don't use `context.endpoint()`
+there, it throws when nothing at all matched.
 
 **Correlation IDs**: `web/middleware/CorrelationId` (registered in `App.javalin` beside `ExceptionMapper`) reads
 `X-Correlation-ID` from each request — or generates a UUID when it is absent or fails the `[A-Za-z0-9._:-]{1,64}`

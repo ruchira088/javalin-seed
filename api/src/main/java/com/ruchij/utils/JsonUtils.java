@@ -12,6 +12,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 public class JsonUtils {
     public static final ObjectMapper OBJECT_MAPPER = objectMapper();
@@ -40,7 +41,14 @@ public class JsonUtils {
         @Override
         public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
             String isoTimestamp = jsonParser.getValueAsString();
-            return Instant.parse(isoTimestamp);
+
+            try {
+                return Instant.parse(isoTimestamp);
+            } catch (DateTimeParseException exception) {
+                return (Instant) deserializationContext.handleWeirdStringValue(
+                    Instant.class, isoTimestamp, "expected an ISO-8601 instant"
+                );
+            }
         }
     }
 }

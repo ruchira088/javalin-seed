@@ -10,6 +10,8 @@
         allowed_origins: ["https://*.ruchij.com", "https://*.home.ruchij.com"]
         # Off: the API has no cookie auth, and with wildcard origins credentials would reach every matching subdomain
         allow_credentials: false
+        # Serve /openapi.json and /swagger; set false to hide the API surface in this environment
+        api_docs_enabled: true
         min_replicas: 1
         app_log_level: DEBUG
 

@@ -82,7 +82,8 @@ class AppTest {
 
     @Test
     void shouldSendCorsCredentialsWhenEnabled() {
-        Javalin app = App.javalin(createMockRoutes(), List.of("https://custom.example.com"), true, new SimpleMeterRegistry());
+        HttpConfiguration httpConfiguration = new HttpConfiguration(0, List.of("https://custom.example.com"), true, true);
+        Javalin app = App.javalin(createMockRoutes(), httpConfiguration, new SimpleMeterRegistry());
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
@@ -150,6 +151,18 @@ class AppTest {
     }
 
     @Test
+    void shouldNotServeApiDocsWhenDisabled() {
+        HttpConfiguration httpConfiguration = new HttpConfiguration(0, List.of(), false, false);
+        Javalin app = App.javalin(createMockRoutes(), httpConfiguration, new SimpleMeterRegistry());
+
+        JavalinTest.test(app, (server, client) -> {
+            assertEquals(404, client.get("/openapi.json").code());
+            assertEquals(404, client.get("/swagger").code());
+            assertEquals(200, client.get("/service/info").code());
+        });
+    }
+
+    @Test
     void shouldServeSwaggerUi() {
         Routes routes = createMockRoutes();
         Javalin app = App.javalin(routes, List.of());
@@ -165,7 +178,7 @@ class AppTest {
         int port = findAvailablePort();
         int managementPort = findAvailablePort();
         ApplicationConfiguration config = new ApplicationConfiguration(
-            new HttpConfiguration(port, List.of(), false),
+            new HttpConfiguration(port, List.of(), false, true),
             new ManagementConfiguration(managementPort)
         );
 

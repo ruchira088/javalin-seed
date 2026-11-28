@@ -1,6 +1,7 @@
 package com.ruchij;
 
 import com.ruchij.config.ApplicationConfiguration;
+import com.ruchij.config.HttpConfiguration;
 import com.ruchij.metrics.MetricsRegistry;
 import com.ruchij.service.health.HealthServiceImpl;
 import com.ruchij.service.health.models.BuildInformation;
@@ -48,12 +49,7 @@ public class App {
 
         Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
 
-        Javalin app = javalin(
-            routes,
-            applicationConfiguration.httpConfiguration().allowedOrigins(),
-            applicationConfiguration.httpConfiguration().allowCredentials(),
-            meterRegistry
-        );
+        Javalin app = javalin(routes, applicationConfiguration.httpConfiguration(), meterRegistry);
         app.start(applicationConfiguration.httpConfiguration().port());
 
         Javalin managementApp = managementJavalin(meterRegistry);
@@ -74,15 +70,17 @@ public class App {
     }
 
     /**
-     * {@link #javalin(Routes, List, boolean, MeterRegistry)} without CORS credentials and with request metrics recorded
-     * into a throwaway registry.
+     * {@link #javalin(Routes, HttpConfiguration, MeterRegistry)} for tests: the given CORS origins, no CORS credentials,
+     * API docs on, and request metrics recorded into a throwaway registry. The port is unused.
      */
     public static Javalin javalin(Routes routes, List<String> allowedOrigins) {
-        return javalin(routes, allowedOrigins, false, new SimpleMeterRegistry());
+        return javalin(routes, new HttpConfiguration(0, allowedOrigins, false, true), new SimpleMeterRegistry());
     }
 
-    public static Javalin javalin(Routes routes, List<String> allowedOrigins, boolean allowCredentials, MeterRegistry meterRegistry) {
+    /** Builds the fully configured, unstarted API server; {@code httpConfiguration.port()} is not used here. */
+    public static Javalin javalin(Routes routes, HttpConfiguration httpConfiguration, MeterRegistry meterRegistry) {
         RequestMetrics requestMetrics = new RequestMetrics(meterRegistry);
+        List<String> allowedOrigins = httpConfiguration.allowedOrigins();
 
         return Javalin.create(javalinConfig -> {
             javalinConfig.concurrency.useVirtualThreads = true;
@@ -97,26 +95,28 @@ public class App {
                     cors.addRule(rule -> {
                         allowedOrigins.forEach(rule::allowHost);
 
-                        rule.allowCredentials = allowCredentials;
+                        rule.allowCredentials = httpConfiguration.allowCredentials();
                     });
                 });
             }
 
-            javalinConfig.registerPlugin(new OpenApiPlugin(openApiConfig ->
-                openApiConfig
-                    .withDocumentationPath("/openapi.json")
-                    .withDefinitionConfiguration((version, definition) ->
-                        definition.info(info ->
-                            info.title("Javalin Seed API")
-                                .version(BuildInformation.get().gitCommit())
-                                .description("API documentation for the Javalin Seed project")
+            if (httpConfiguration.apiDocsEnabled()) {
+                javalinConfig.registerPlugin(new OpenApiPlugin(openApiConfig ->
+                    openApiConfig
+                        .withDocumentationPath("/openapi.json")
+                        .withDefinitionConfiguration((version, definition) ->
+                            definition.info(info ->
+                                info.title("Javalin Seed API")
+                                    .version(BuildInformation.get().gitCommit())
+                                    .description("API documentation for the Javalin Seed project")
+                            )
                         )
-                    )
-            ));
+                ));
 
-            javalinConfig.registerPlugin(new SwaggerPlugin(swaggerConfig ->
-                swaggerConfig.documentationPath = "/openapi.json"
-            ));
+                javalinConfig.registerPlugin(new SwaggerPlugin(swaggerConfig ->
+                    swaggerConfig.documentationPath = "/openapi.json"
+                ));
+            }
 
             javalinConfig.routes.apiBuilder(routes);
             CorrelationId.register(javalinConfig.routes);

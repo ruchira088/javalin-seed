@@ -21,7 +21,7 @@ updates:
           - minor
           - patch
 
-  # Dependabot matches any filename containing "Dockerfile", so it picks up the FROM line in Dockerfile.j2
+  # Dependabot matches any filename containing "Dockerfile", so it picks up the FROM lines in Dockerfile.j2
   - package-ecosystem: docker
     directory: /playbooks/docker
     schedule:
@@ -31,3 +31,9 @@ updates:
       - dependency-name: eclipse-temurin
         update-types:
           - version-update:semver-major
+      # The runtime stage's base must match the Ubuntu release the Temurin images use (glibc); bump it by hand with
+      # them rather than to every new tag (26.10 etc. are non-LTS)
+      - dependency-name: ubuntu
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor

@@ -1,13 +1,34 @@
-FROM eclipse-temurin:25-jre
+# syntax=docker/dockerfile:1
+# (BuildKit Dockerfile syntax 1.4+ is needed for the COPY <<heredoc and COPY --chmod used by the AOT training step)
+
+# Stage 1: a trimmed Java runtime holding only the JDK modules the app uses. The list was measured by running the test
+# suite and the packaged app (with the K8s Logback config) under -Xlog:class+load and collecting every jrt:/ module,
+# plus java.naming, java.sql and jdk.unsupported from static analysis and jdk.jcmd for thread dumps in a live pod.
+# If new code fails with NoClassDefFoundError for a java.* / jdk.* class, add that module here.
+FROM eclipse-temurin:25-jdk AS runtime-builder
+
+RUN jlink \
+      --add-modules java.base,java.desktop,java.logging,java.management,java.naming,java.sql,java.xml,jdk.jcmd,jdk.jfr,jdk.localedata,jdk.management,jdk.management.jfr,jdk.net,jdk.unsupported \
+      --include-locales en \
+      --strip-debug \
+      --no-man-pages \
+      --no-header-files \
+      --compress zip-6 \
+      --output /javaruntime
+
+# Stage 2: the application on a slim base (same Ubuntu release as the Temurin images, so the same glibc)
+FROM ubuntu:26.04
 
 LABEL org.opencontainers.image.source=https://github.com/ruchira088/javalin-seed
 LABEL org.opencontainers.image.revision={{ git_commit }}
 
+ENV JAVA_HOME=/opt/java
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 ENV GIT_BRANCH={{ git_branch }}
 ENV GIT_COMMIT={{ git_commit }}
 ENV BUILD_TIMESTAMP={{ build_timestamp }}
-# Size the heap from the container memory limit (the JVM default is only 25% of it)
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=75"
+
+COPY --from=runtime-builder /javaruntime /opt/java
 
 RUN useradd --system --uid 1001 --user-group --no-create-home javalin
 
@@ -15,6 +36,42 @@ WORKDIR /opt/javalin-seed-{{ app }}
 
 # ADD (not COPY) so the distTar archive is extracted into the working directory
 ADD {{ app }}.tar .
+
+# AOT training run (JEP 514/515): start the app, send it representative traffic, then stop it. On exit the JVM writes
+# an AOT cache of the classes it loaded and linked (plus method profiles), which production starts from. The cache is
+# tied to this exact JVM and classpath, which is why it is built here, per platform, from the archive just added.
+COPY --chmod=755 <<'TRAIN' /tmp/aot-train.sh
+#!/bin/bash
+set -euo pipefail
+
+request() { # $1 port, $2 path: a dependency-free HTTP/1.0 GET over bash's /dev/tcp
+    exec 3<>"/dev/tcp/127.0.0.1/$1" && printf 'GET %s HTTP/1.0\r\nX-Correlation-ID: aot-training\r\n\r\n' "$2" >&3 && cat <&3 >/dev/null
+}
+
+cat > /tmp/training-logback.xml <<'XML'
+<configuration><root level="WARN"/></configuration>
+XML
+
+# The start script already passes -Dlogback.configurationFile=/opt/data/logback.xml; the later JAVA_OPTS value wins
+JAVA_OPTS="-XX:AOTCacheOutput=/opt/javalin-seed-{{ app }}/app.aot -Dlogback.configurationFile=/tmp/training-logback.xml" \
+    "/opt/javalin-seed-{{ app }}/{{ app }}/bin/{{ app }}" &
+pid=$!
+
+for _ in $(seq 1 120); do request 8080 /service/health 2>/dev/null && break; sleep 1; done
+for _ in $(seq 1 20); do
+    for path in /service/health /service/info /does-not-exist /openapi.json /swagger; do request 8080 "$path"; done
+    request 9090 /metrics
+done
+
+kill -TERM "$pid"
+wait "$pid" || true
+test -s "/opt/javalin-seed-{{ app }}/app.aot"
+TRAIN
+RUN /tmp/aot-train.sh && rm /tmp/aot-train.sh /tmp/training-logback.xml
+
+# Size the heap from the container memory limit (the JVM default is only 25% of it) and start from the AOT cache. If
+# the cache cannot be used (e.g. a JVM flag that invalidates it), the JVM logs a warning and starts normally.
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:AOTCache=/opt/javalin-seed-{{ app }}/app.aot"
 
 USER javalin
 

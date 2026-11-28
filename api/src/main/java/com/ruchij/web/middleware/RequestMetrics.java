@@ -5,7 +5,6 @@ import io.javalin.router.Endpoint;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.binder.http.Outcome;
-
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,12 +29,12 @@ public final class RequestMetrics {
         int status = context.statusCode();
 
         Timer.builder(METRIC_NAME)
-            .tag("method", context.method().name())
-            .tag("uri", endpoint == null ? NOT_FOUND_URI : endpoint.path)
-            .tag("status", Integer.toString(status))
-            .tag("outcome", Outcome.forStatus(status).name())
-            .publishPercentileHistogram()
-            .register(meterRegistry)
-            .record((long) (executionTimeMs * 1_000_000), TimeUnit.NANOSECONDS);
+                .tag("method", context.method().name())
+                .tag("uri", endpoint == null ? NOT_FOUND_URI : endpoint.path)
+                .tag("status", Integer.toString(status))
+                .tag("outcome", Outcome.forStatus(status).name())
+                .publishPercentileHistogram()
+                .register(meterRegistry)
+                .record((long) (executionTimeMs * 1_000_000), TimeUnit.NANOSECONDS);
     }
 }

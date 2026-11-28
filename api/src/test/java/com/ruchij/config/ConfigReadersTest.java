@@ -1,12 +1,11 @@
 package com.ruchij.config;
 
-import com.typesafe.config.ConfigException;
-import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.typesafe.config.ConfigException;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
 class ConfigReadersTest {
 

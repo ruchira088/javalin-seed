@@ -1,5 +1,8 @@
 package com.ruchij.web.middleware;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -8,18 +11,14 @@ import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.web.Routes;
 import io.javalin.testtools.JavalinTest;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RequestLoggingTest {
     private final Logger logger = (Logger) LoggerFactory.getLogger(RequestLogging.class);
@@ -44,9 +43,8 @@ class RequestLoggingTest {
             ILoggingEvent event = awaitSingleEvent();
             assertEquals(Level.INFO, event.getLevel());
             assertTrue(
-                event.getFormattedMessage().matches("GET /service/health 200 \\d+\\.\\dms"),
-                event.getFormattedMessage()
-            );
+                    event.getFormattedMessage().matches("GET /service/health 200 \\d+\\.\\dms"),
+                    event.getFormattedMessage());
             assertEquals("request-log-test", event.getMDCPropertyMap().get(CorrelationId.MDC_KEY));
         });
     }

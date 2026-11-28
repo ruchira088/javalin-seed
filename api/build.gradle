@@ -4,6 +4,7 @@ plugins {
     id 'checkstyle'
     alias(libs.plugins.versions)
     alias(libs.plugins.spotbugs)
+    alias(libs.plugins.spotless)
 }
 
 group = 'com.ruchij'
@@ -153,6 +154,16 @@ jacocoTestCoverageVerification {
 }
 
 check.dependsOn jacocoTestCoverageVerification
+
+// `check` runs spotlessCheck; `./gradlew spotlessApply` reformats. The generated BuildInfo is outside src/.
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        palantirJavaFormat(libs.versions.palantir.java.format.get())
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
 
 checkstyle {
     toolVersion = libs.versions.checkstyle.get()

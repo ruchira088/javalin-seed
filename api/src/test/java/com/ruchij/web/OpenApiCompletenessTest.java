@@ -1,5 +1,8 @@
 package com.ruchij.web;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
@@ -7,17 +10,13 @@ import com.ruchij.utils.JsonUtils;
 import io.javalin.Javalin;
 import io.javalin.router.Endpoint;
 import io.javalin.testtools.JavalinTest;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 /**
  * Guards against handlers that are routed but missing from {@code /openapi.json}. The spec is generated at compile time
@@ -42,13 +41,15 @@ class OpenApiCompletenessTest {
                 }
             }
 
-            JsonNode paths = JsonUtils.OBJECT_MAPPER.readTree(client.get("/openapi.json").body().string()).get("paths");
+            JsonNode paths = JsonUtils.OBJECT_MAPPER
+                    .readTree(client.get("/openapi.json").body().string())
+                    .get("paths");
             Set<String> documented = new TreeSet<>();
-            paths.properties().forEach(path ->
-                path.getValue().properties().forEach(operation ->
-                    documented.add(operation.getKey().toUpperCase(Locale.ROOT) + " " + path.getKey())
-                )
-            );
+            paths.properties()
+                    .forEach(path -> path.getValue()
+                            .properties()
+                            .forEach(operation ->
+                                    documented.add(operation.getKey().toUpperCase(Locale.ROOT) + " " + path.getKey())));
 
             assertFalse(routed.isEmpty(), "no routes found; has the router API changed?");
 

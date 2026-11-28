@@ -10,7 +10,7 @@ A template repository for bootstrapping a Java HTTP API service. It ships with e
 - **Logback** with [logstash-logback-encoder](https://github.com/logfellow/logstash-logback-encoder) for JSON logs.
 - **`/service/info` endpoint** that reports build metadata (name, group, git branch/commit, commit timestamp, Gradle version, JVM properties) — populated at compile time by a `generateBuildInfo` Gradle task — and a lightweight **`/service/health`** endpoint for the Kubernetes probes.
 - **Request logging and correlation IDs**: one access-log line per request, tagged with the request's `X-Correlation-ID`. Unhandled exceptions are logged with their stack trace and return a generic 500.
-- **Quality gates**: Checkstyle, SpotBugs, JaCoCo coverage, and `-Werror -Xlint:all,-processing`. Errors are RFC 9457 `application/problem+json` bodies. The [Gradle Versions plugin](https://github.com/ben-manes/gradle-versions-plugin) reports outdated dependencies.
+- **Quality gates**: Spotless (palantir-java-format; `./gradlew spotlessApply`), Checkstyle, SpotBugs, JaCoCo coverage, and `-Werror -Xlint:all,-processing`. Errors are RFC 9457 `application/problem+json` bodies. The [Gradle Versions plugin](https://github.com/ben-manes/gradle-versions-plugin) reports outdated dependencies.
 - **Tests**: JUnit 6 (Jupiter) + Mockito, with end-to-end tests against a real Javalin instance.
 - **CI/CD**: GitHub Actions pipeline (`.github/workflows/build-pipeline.yml`) and Ansible playbooks (`playbooks/`) that build a Docker image and deploy it to Kubernetes (dev / staging / production). Per-branch dev environments and their GHCR images are torn down automatically when the branch is deleted or its PR is merged (`.github/workflows/cleanup-dev-environment.yml`).
 

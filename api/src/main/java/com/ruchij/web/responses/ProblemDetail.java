@@ -1,7 +1,6 @@
 package com.ruchij.web.responses;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.List;
 import java.util.Map;
 
@@ -15,14 +14,13 @@ import java.util.Map;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ProblemDetail(
-    String type,
-    String title,
-    int status,
-    String detail,
-    String instance,
-    String correlationId,
-    Map<String, List<String>> errors
-) {
+        String type,
+        String title,
+        int status,
+        String detail,
+        String instance,
+        String correlationId,
+        Map<String, List<String>> errors) {
     public static final String CONTENT_TYPE = "application/problem+json";
     public static final String DEFAULT_TYPE = "about:blank";
 

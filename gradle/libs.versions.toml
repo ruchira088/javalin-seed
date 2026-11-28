@@ -12,6 +12,8 @@ mockito = "5.25.0"
 
 versions-plugin = "0.67.0"
 spotbugs-plugin = "6.5.15"
+spotless-plugin = "8.12.0"
+palantir-java-format = "2.103.0"
 checkstyle = "14.4.0"
 jacoco = "0.8.16"
 
@@ -36,10 +38,12 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 
-# Not dependencies: these exist so Dependabot tracks the Checkstyle and JaCoCo tool versions
+# Not dependencies: these exist so Dependabot tracks the Checkstyle, JaCoCo and formatter tool versions
 checkstyle = { module = "com.puppycrawl.tools:checkstyle", version.ref = "checkstyle" }
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
+palantir-java-format = { module = "com.palantir.javaformat:palantir-java-format", version.ref = "palantir-java-format" }
 
 [plugins]
 versions = { id = "io.github.ben-manes.versions", version.ref = "versions-plugin" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs-plugin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless-plugin" }

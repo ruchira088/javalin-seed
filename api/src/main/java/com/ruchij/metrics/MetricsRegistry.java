@@ -14,14 +14,14 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 public final class MetricsRegistry {
     public static final String APPLICATION_TAG = "application";
 
-    private MetricsRegistry() {
-    }
+    private MetricsRegistry() {}
 
     /**
      * A Prometheus registry with the standard JVM and process meters bound. Every meter carries an
      * {@value #APPLICATION_TAG} tag so dashboards can tell services apart.
      */
-    @SuppressWarnings("resource") // the GC and heap-pressure binders listen for the life of the JVM, so are never closed
+    @SuppressWarnings(
+            "resource") // the GC and heap-pressure binders listen for the life of the JVM, so are never closed
     public static PrometheusMeterRegistry create(String applicationName) {
         PrometheusMeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
         registry.config().commonTags(APPLICATION_TAG, applicationName);

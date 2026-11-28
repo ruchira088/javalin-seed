@@ -1,22 +1,20 @@
 package com.ruchij.config;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class ApplicationConfigurationTest {
 
     @Test
     void shouldParseApplicationConfiguration() {
         Config config = ConfigFactory.parseMap(Map.of(
-            "http.port", 8080,
-            "management.port", 9090
-        ));
+                "http.port", 8080,
+                "management.port", 9090));
 
         ApplicationConfiguration appConfig = ApplicationConfiguration.parse(config);
 
@@ -27,14 +25,14 @@ class ApplicationConfigurationTest {
     @Test
     void shouldParseFullConfiguration() {
         Config config = ConfigFactory.parseMap(Map.of(
-            "http.port", 9000,
-            "http.allowed-origins", "https://example.com",
-            "management.port", 9191
-        ));
+                "http.port", 9000,
+                "http.allowed-origins", "https://example.com",
+                "management.port", 9191));
 
         ApplicationConfiguration appConfig = ApplicationConfiguration.parse(config);
 
         assertEquals(9000, appConfig.httpConfiguration().port());
-        assertEquals(List.of("https://example.com"), appConfig.httpConfiguration().allowedOrigins());
+        assertEquals(
+                List.of("https://example.com"), appConfig.httpConfiguration().allowedOrigins());
     }
 }

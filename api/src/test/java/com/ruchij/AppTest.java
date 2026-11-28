@@ -1,5 +1,10 @@
 package com.ruchij;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ruchij.config.ApplicationConfiguration;
 import com.ruchij.config.HttpConfiguration;
@@ -14,9 +19,6 @@ import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -25,20 +27,16 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class AppTest {
 
     private Routes createMockRoutes() {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation())
-            .thenReturn(new ServiceInformation(
-                "test-app", "21", "8.0", Instant.now(), "main", "abc123", Instant.now()
-            ));
+                .thenReturn(new ServiceInformation(
+                        "test-app", "21", "8.0", Instant.now(), "main", "abc123", Instant.now()));
         return new Routes(healthService);
     }
 
@@ -60,11 +58,13 @@ class AppTest {
         Javalin app = App.javalin(routes, customOrigins);
 
         JavalinTest.test(app, (server, client) -> {
-            Response allowed = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
+            Response allowed =
+                    client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
             assertEquals(200, allowed.code());
-            assertEquals("https://custom.example.com", allowed.headers().get("Access-Control-Allow-Origin").getFirst());
+            assertEquals("https://custom.example.com", header(allowed, "Access-Control-Allow-Origin"));
 
-            Response disallowed = client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
+            Response disallowed =
+                    client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
             assertNull(disallowed.headers().get("Access-Control-Allow-Origin"));
         });
     }
@@ -74,20 +74,23 @@ class AppTest {
         Javalin app = App.javalin(createMockRoutes(), List.of("https://custom.example.com"));
 
         JavalinTest.test(app, (server, client) -> {
-            Response response = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
-            assertEquals("https://custom.example.com", response.headers().get("Access-Control-Allow-Origin").getFirst());
+            Response response =
+                    client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
+            assertEquals("https://custom.example.com", header(response, "Access-Control-Allow-Origin"));
             assertNull(response.headers().get("Access-Control-Allow-Credentials"));
         });
     }
 
     @Test
     void shouldSendCorsCredentialsWhenEnabled() {
-        HttpConfiguration httpConfiguration = new HttpConfiguration(0, List.of("https://custom.example.com"), true, true);
+        HttpConfiguration httpConfiguration =
+                new HttpConfiguration(0, List.of("https://custom.example.com"), true, true);
         Javalin app = App.javalin(createMockRoutes(), httpConfiguration, new SimpleMeterRegistry());
 
         JavalinTest.test(app, (server, client) -> {
-            Response response = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
-            assertEquals("true", response.headers().get("Access-Control-Allow-Credentials").getFirst());
+            Response response =
+                    client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
+            assertEquals("true", header(response, "Access-Control-Allow-Credentials"));
         });
     }
 
@@ -96,7 +99,8 @@ class AppTest {
         Javalin app = App.javalin(createMockRoutes(), List.of());
 
         JavalinTest.test(app, (server, client) -> {
-            Response response = client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
+            Response response =
+                    client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
             assertEquals(200, response.code());
             assertNull(response.headers().get("Access-Control-Allow-Origin"));
         });
@@ -120,9 +124,8 @@ class AppTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Instant fixedInstant = Instant.parse("2024-01-15T10:30:00Z");
         Mockito.when(healthService.serviceInformation())
-            .thenReturn(new ServiceInformation(
-                "test-app", "21", "8.0", fixedInstant, "main", "abc123", fixedInstant
-            ));
+                .thenReturn(
+                        new ServiceInformation("test-app", "21", "8.0", fixedInstant, "main", "abc123", fixedInstant));
 
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
@@ -178,9 +181,7 @@ class AppTest {
         int port = findAvailablePort();
         int managementPort = findAvailablePort();
         ApplicationConfiguration config = new ApplicationConfiguration(
-            new HttpConfiguration(port, List.of(), false, true),
-            new ManagementConfiguration(managementPort)
-        );
+                new HttpConfiguration(port, List.of(), false, true), new ManagementConfiguration(managementPort));
 
         Thread serverThread = new Thread(() -> App.run(config));
         serverThread.start();
@@ -209,14 +210,14 @@ class AppTest {
         JavalinTest.test(App.managementJavalin(registry), (server, client) -> {
             Response response = client.get("/metrics");
             assertEquals(200, response.code());
-            assertEquals(App.PROMETHEUS_CONTENT_TYPE, response.headers().get("Content-Type").getFirst());
+            assertEquals(App.PROMETHEUS_CONTENT_TYPE, header(response, "Content-Type"));
             assertTrue(response.body().string().contains("application=\"test-app\""));
         });
     }
 
     @Test
     void shouldStartServerWithMainMethod() throws Exception {
-        Thread mainThread = new Thread(() -> App.main(new String[]{}));
+        Thread mainThread = new Thread(() -> App.main(new String[] {}));
         mainThread.setDaemon(true);
         mainThread.start();
 
@@ -229,7 +230,8 @@ class AppTest {
 
     private static HttpResponse<String> waitForServer(String url) throws Exception {
         try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+            HttpRequest request =
+                    HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
 
             int maxAttempts = 20;
             for (int i = 0; i < maxAttempts; i++) {
@@ -248,5 +250,11 @@ class AppTest {
         try (ServerSocket socket = new ServerSocket(0)) {
             return socket.getLocalPort();
         }
+    }
+
+    private static String header(Response response, String name) {
+        List<String> values = response.headers().get(name);
+        assertNotNull(values, "missing " + name + " header");
+        return values.getFirst();
     }
 }

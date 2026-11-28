@@ -1,15 +1,14 @@
 package com.ruchij.config;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 class HttpConfigurationTest {
 
@@ -41,10 +40,8 @@ class HttpConfigurationTest {
 
     @Test
     void shouldParseAllowedOriginsFromConfig() {
-        Config config = ConfigFactory.parseMap(Map.of(
-            "port", 9000,
-            "allowed-origins", "https://example.com, https://test.com"
-        ));
+        Config config = ConfigFactory.parseMap(
+                Map.of("port", 9000, "allowed-origins", "https://example.com, https://test.com"));
 
         HttpConfiguration httpConfig = HttpConfiguration.parse(config);
 
@@ -54,10 +51,7 @@ class HttpConfigurationTest {
 
     @Test
     void shouldHandleSingleAllowedOrigin() {
-        Config config = ConfigFactory.parseMap(Map.of(
-            "port", 8080,
-            "allowed-origins", "https://single.com"
-        ));
+        Config config = ConfigFactory.parseMap(Map.of("port", 8080, "allowed-origins", "https://single.com"));
 
         HttpConfiguration httpConfig = HttpConfiguration.parse(config);
 
@@ -66,10 +60,8 @@ class HttpConfigurationTest {
 
     @Test
     void shouldFilterEmptyOriginsFromList() {
-        Config config = ConfigFactory.parseMap(Map.of(
-            "port", 8080,
-            "allowed-origins", "https://first.com, , https://second.com, "
-        ));
+        Config config = ConfigFactory.parseMap(
+                Map.of("port", 8080, "allowed-origins", "https://first.com, , https://second.com, "));
 
         HttpConfiguration httpConfig = HttpConfiguration.parse(config);
 
@@ -78,10 +70,8 @@ class HttpConfigurationTest {
 
     @Test
     void shouldTrimWhitespaceFromOrigins() {
-        Config config = ConfigFactory.parseMap(Map.of(
-            "port", 8080,
-            "allowed-origins", "  https://first.com  ,  https://second.com  "
-        ));
+        Config config = ConfigFactory.parseMap(
+                Map.of("port", 8080, "allowed-origins", "  https://first.com  ,  https://second.com  "));
 
         HttpConfiguration httpConfig = HttpConfiguration.parse(config);
 

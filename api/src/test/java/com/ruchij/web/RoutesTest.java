@@ -1,5 +1,7 @@
 package com.ruchij.web;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
@@ -7,13 +9,10 @@ import com.ruchij.web.routes.ServiceRoute;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.time.Instant;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class RoutesTest {
 
@@ -21,9 +20,8 @@ class RoutesTest {
     void shouldRegisterServiceRouteUnderServicePath() {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation())
-            .thenReturn(new ServiceInformation(
-                "test-app", "21", "8.0", Instant.now(), "main", "abc", Instant.now()
-            ));
+                .thenReturn(
+                        new ServiceInformation("test-app", "21", "8.0", Instant.now(), "main", "abc", Instant.now()));
 
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
@@ -38,9 +36,8 @@ class RoutesTest {
     void shouldAcceptServiceRouteDirectly() {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation())
-            .thenReturn(new ServiceInformation(
-                "test-app", "21", "8.0", Instant.now(), "main", "abc", Instant.now()
-            ));
+                .thenReturn(
+                        new ServiceInformation("test-app", "21", "8.0", Instant.now(), "main", "abc", Instant.now()));
 
         ServiceRoute serviceRoute = new ServiceRoute(healthService);
         Routes routes = new Routes(serviceRoute);

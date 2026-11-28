@@ -1,19 +1,18 @@
 package com.ruchij.web.routes;
 
+import static com.ruchij.utils.JsonUtils.OBJECT_MAPPER;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.web.Routes;
 import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.time.Instant;
 import java.util.List;
-
-import static com.ruchij.utils.JsonUtils.OBJECT_MAPPER;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class ServiceRouteTest {
 
@@ -23,15 +22,8 @@ class ServiceRouteTest {
         Instant timestamp = Instant.parse("2023-02-05T04:37:42.566735Z");
 
         Mockito.when(healthService.serviceInformation())
-            .thenReturn(new ServiceInformation(
-                "javalin-seed",
-                "17.0.5",
-                "7.6",
-                timestamp,
-                "main",
-                "my-commit",
-                timestamp
-            ));
+                .thenReturn(new ServiceInformation(
+                        "javalin-seed", "17.0.5", "7.6", timestamp, "main", "my-commit", timestamp));
 
         Routes routes = new Routes(healthService);
 
@@ -52,9 +44,8 @@ class ServiceRouteTest {
                 """;
 
             assertEquals(
-                OBJECT_MAPPER.readTree(expectedResponseBody),
-                OBJECT_MAPPER.readTree(response.body().string())
-            );
+                    OBJECT_MAPPER.readTree(expectedResponseBody),
+                    OBJECT_MAPPER.readTree(response.body().string()));
         }));
     }
 
@@ -68,11 +59,10 @@ class ServiceRouteTest {
             assertEquals(200, response.code());
 
             assertEquals(
-                OBJECT_MAPPER.readTree("""
+                    OBJECT_MAPPER.readTree("""
                     {"status": "ok"}
                     """),
-                OBJECT_MAPPER.readTree(response.body().string())
-            );
+                    OBJECT_MAPPER.readTree(response.body().string()));
             Mockito.verifyNoInteractions(healthService);
         }));
     }

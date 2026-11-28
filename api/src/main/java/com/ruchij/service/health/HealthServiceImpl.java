@@ -2,7 +2,6 @@ package com.ruchij.service.health;
 
 import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.service.health.models.ServiceInformation;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Properties;
@@ -24,14 +23,13 @@ public class HealthServiceImpl implements HealthService {
         Instant timestamp = clock.instant();
 
         ServiceInformation serviceInformation = new ServiceInformation(
-            buildInformation.name(),
-            javaVersion,
-            buildInformation.gradleVersion(),
-            timestamp,
-            buildInformation.gitBranch(),
-            buildInformation.gitCommit(),
-            buildInformation.buildTimestamp()
-        );
+                buildInformation.name(),
+                javaVersion,
+                buildInformation.gradleVersion(),
+                timestamp,
+                buildInformation.gitBranch(),
+                buildInformation.gitCommit(),
+                buildInformation.buildTimestamp());
 
         return serviceInformation;
     }

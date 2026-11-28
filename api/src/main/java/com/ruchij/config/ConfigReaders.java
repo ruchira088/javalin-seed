@@ -1,7 +1,6 @@
 package com.ruchij.config;
 
 import com.typesafe.config.ConfigException;
-
 import java.util.Optional;
 import java.util.function.Supplier;
 

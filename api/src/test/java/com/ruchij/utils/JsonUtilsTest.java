@@ -1,13 +1,12 @@
 package com.ruchij.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.junit.jupiter.api.Test;
-
 import java.time.Instant;
 import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class JsonUtilsTest {
 
@@ -41,8 +40,7 @@ class JsonUtilsTest {
 
     @Test
     void shouldSerializeRecordWithInstant() throws JsonProcessingException {
-        record TestRecord(String name, Instant timestamp) {
-        }
+        record TestRecord(String name, Instant timestamp) {}
 
         Instant instant = Instant.parse("2024-01-15T10:30:00Z");
         TestRecord record = new TestRecord("test", instant);
@@ -61,8 +59,7 @@ class JsonUtilsTest {
 
     @Test
     void shouldDeserializeRecordWithInstant() throws JsonProcessingException {
-        record TestRecord(String name, Instant timestamp) {
-        }
+        record TestRecord(String name, Instant timestamp) {}
 
         String json = """
             {
@@ -78,8 +75,7 @@ class JsonUtilsTest {
 
     @Test
     void shouldHandleOptionalWithJdk8Module() throws JsonProcessingException {
-        record TestRecord(Optional<String> value) {
-        }
+        record TestRecord(Optional<String> value) {}
 
         TestRecord withValue = new TestRecord(Optional.of("present"));
         JsonNode jsonWithValue = JsonUtils.OBJECT_MAPPER.valueToTree(withValue);

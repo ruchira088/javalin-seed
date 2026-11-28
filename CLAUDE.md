@@ -19,6 +19,7 @@ Requires JDK 25. The wrapper pins Gradle 9.9.3.
 ./gradlew check                 # static analysis + tests (CI runs `assemble` then `check`)
 ./gradlew test                  # tests only; JaCoCo report is generated automatically afterwards
 ./gradlew run                   # start the API on http://localhost:8080
+./gradlew spotlessApply        # format Java sources (palantir-java-format); `check` fails on unformatted code
 ./gradlew checkstyleMain spotbugsMain   # lint without running tests
 ./gradlew dependencyUpdates     # report newer versions of the deps pinned in gradle/libs.versions.toml
 ```
@@ -40,6 +41,11 @@ Reports land under `api/build/reports/` (`tests/test/`, `jacoco/test/html/`, `ch
 - **JaCoCo coverage floor**: `check` runs `jacocoTestCoverageVerification`, which fails the build if line coverage
   drops below 90% (the generated `com.ruchij.build` package is excluded). Compilation uses a Gradle JDK toolchain
   (`languageVersion = 25`), so a JDK 25 must be installed locally — Gradle auto-detects SDKMAN/Homebrew installs.
+- **Formatting**: Spotless runs palantir-java-format (120 columns, 8-space continuation indent) over `src/*/java`,
+  and `check` includes `spotlessCheck` — run `./gradlew spotlessApply` before pushing. `.editorconfig` matches it.
+  SpotBugs only reports a possible null dereference when the call and the dereference are on different lines, which
+  the formatter often makes them: null-check `response.headers().get(...)` (see the `header(...)` test helpers)
+  rather than chaining `.getFirst()`.
 - **Checkstyle** (`config/checkstyle/checkstyle.xml`) enforces a 150-column line limit, no star imports,
   braces on all blocks, and standard naming. **SpotBugs** exclusions live in `config/spotbugs/exclude.xml`; the
   `EI_EXPOSE_REP` suppression there is intentional for records holding unmodifiable `List`s — add new record/DI

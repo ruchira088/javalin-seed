@@ -1,9 +1,9 @@
 package com.ruchij.service.health.models;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.Test;
 
 class BuildInformationTest {
 
@@ -22,14 +22,8 @@ class BuildInformationTest {
     @Test
     void shouldCreateBuildInformationRecord() {
         java.time.Instant timestamp = java.time.Instant.now();
-        BuildInformation buildInfo = new BuildInformation(
-            "my-app",
-            "com.example",
-            "8.5",
-            timestamp,
-            "develop",
-            "xyz123"
-        );
+        BuildInformation buildInfo =
+                new BuildInformation("my-app", "com.example", "8.5", timestamp, "develop", "xyz123");
 
         assertEquals("my-app", buildInfo.name());
         assertEquals("com.example", buildInfo.group());

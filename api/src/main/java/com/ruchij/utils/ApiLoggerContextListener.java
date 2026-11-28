@@ -25,17 +25,11 @@ public class ApiLoggerContextListener extends ContextAwareBase implements Logger
     }
 
     @Override
-    public void onReset(LoggerContext context) {
-
-    }
+    public void onReset(LoggerContext context) {}
 
     @Override
-    public void onStop(LoggerContext context) {
-
-    }
+    public void onStop(LoggerContext context) {}
 
     @Override
-    public void onLevelChange(Logger logger, Level level) {
-
-    }
+    public void onLevelChange(Logger logger, Level level) {}
 }

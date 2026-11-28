@@ -2,7 +2,6 @@ package com.ruchij.web.middleware;
 
 import io.javalin.config.RoutesConfig;
 import io.javalin.http.Context;
-
 import java.util.Map;
 
 /**
@@ -15,14 +14,12 @@ import java.util.Map;
  */
 public final class SecurityHeaders {
     static final Map<String, String> HEADERS = Map.of(
-        "X-Content-Type-Options", "nosniff",
-        "X-Frame-Options", "DENY",
-        "Referrer-Policy", "no-referrer",
-        "Strict-Transport-Security", "max-age=31536000"
-    );
+            "X-Content-Type-Options", "nosniff",
+            "X-Frame-Options", "DENY",
+            "Referrer-Policy", "no-referrer",
+            "Strict-Transport-Security", "max-age=31536000");
 
-    private SecurityHeaders() {
-    }
+    private SecurityHeaders() {}
 
     public static void register(RoutesConfig routes) {
         routes.before(SecurityHeaders::apply);

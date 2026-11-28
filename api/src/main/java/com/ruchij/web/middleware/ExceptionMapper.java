@@ -11,12 +11,11 @@ import io.javalin.http.ExceptionHandler;
 import io.javalin.http.HttpResponseException;
 import io.javalin.http.HttpStatus;
 import io.javalin.validation.ValidationError;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Maps exceptions (and unmatched routes) to RFC 9457 {@link ProblemDetail} bodies, so every error the API returns has
@@ -61,10 +60,11 @@ public class ExceptionMapper {
             context.attribute("exception", exception);
 
             Map<String, List<String>> errors = exception.getErrors().entrySet().stream()
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    entry -> entry.getValue().stream().map(ValidationError::getMessage).toList()
-                ));
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> entry.getValue().stream()
+                                    .map(ValidationError::getMessage)
+                                    .toList()));
 
             respond(context, HttpStatus.BAD_REQUEST, "The request contains invalid parameters", errors);
         };
@@ -72,14 +72,13 @@ public class ExceptionMapper {
 
     static void respond(Context context, HttpStatus httpStatus, String detail, Map<String, List<String>> errors) {
         ProblemDetail problemDetail = new ProblemDetail(
-            ProblemDetail.DEFAULT_TYPE,
-            httpStatus.getMessage(),
-            httpStatus.getCode(),
-            detail,
-            context.path(),
-            context.attribute(CorrelationId.MDC_KEY),
-            errors
-        );
+                ProblemDetail.DEFAULT_TYPE,
+                httpStatus.getMessage(),
+                httpStatus.getCode(),
+                detail,
+                context.path(),
+                context.attribute(CorrelationId.MDC_KEY),
+                errors);
 
         context.status(httpStatus).json(problemDetail).contentType(ProblemDetail.CONTENT_TYPE);
     }
@@ -104,11 +103,10 @@ public class ExceptionMapper {
         routes.error(HttpStatus.NOT_FOUND, context -> {
             if (context.endpoints().lastHttpEndpoint() == null) {
                 respond(
-                    context,
-                    HttpStatus.NOT_FOUND,
-                    "No matching routes were found for %s %s".formatted(context.method(), context.path()),
-                    null
-                );
+                        context,
+                        HttpStatus.NOT_FOUND,
+                        "No matching routes were found for %s %s".formatted(context.method(), context.path()),
+                        null);
             }
         });
     }

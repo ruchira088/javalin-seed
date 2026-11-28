@@ -150,6 +150,8 @@ read from SSM). `main`, `staging` and `production` are refused at both the workf
 CI builds once: `compile-and-test` uploads `api.tar` as the `api-distribution` artifact, and `publish-docker-image`
 downloads it and runs the playbook with `-e prebuilt_distribution=true`, which skips the Gradle build. The image
 therefore contains exactly the archive that passed `check`. The pod runs as UID 1001 with a read-only root filesystem
-(`/tmp` is an `emptyDir`), so the app must not write anywhere else. Per-environment knobs (`allowed_origins`,
+(`/tmp` is an `emptyDir`), so the app must not write anywhere else. It mounts no service-account token
+(`automountServiceAccountToken: false` — add a ServiceAccount and re-enable it only if code starts calling the K8s
+API), and a soft `topologySpreadConstraints` rule spreads replicas across nodes. Per-environment knobs (`allowed_origins`,
 `allow_credentials`, `api_docs_enabled`, `min_replicas`, `app_log_level`) live in `playbooks/{dev,staging,production}-deploy.yml`. Tasks that handle secrets
 carry `no_log: true` — keep it on any new task that touches SSM values, and don't add `-vvv` back to the workflows.

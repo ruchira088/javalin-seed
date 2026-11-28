@@ -44,7 +44,7 @@ class RequestMetricsTest {
     @Test
     void shouldGroupUnmatchedRequestsUnderNotFound() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), List.of(), registry);
+        Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), List.of(), false, registry);
 
         JavalinTest.test(app, (server, client) -> {
             client.get("/does-not-exist/123");

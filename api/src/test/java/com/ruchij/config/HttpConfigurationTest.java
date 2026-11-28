@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HttpConfigurationTest {
@@ -20,6 +21,14 @@ class HttpConfigurationTest {
 
         assertEquals(8080, httpConfig.port());
         assertTrue(httpConfig.allowedOrigins().isEmpty());
+        assertFalse(httpConfig.allowCredentials());
+    }
+
+    @Test
+    void shouldParseAllowCredentials() {
+        Config config = ConfigFactory.parseMap(Map.of("port", 8080, "allow-credentials", true));
+
+        assertTrue(HttpConfiguration.parse(config).allowCredentials());
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.ruchij.web.Routes;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -65,6 +66,27 @@ class AppTest {
 
             Response disallowed = client.get("/service/info", request -> request.header("Origin", "http://localhost:3000"));
             assertNull(disallowed.headers().get("Access-Control-Allow-Origin"));
+        });
+    }
+
+    @Test
+    void shouldOmitCorsCredentialsByDefault() {
+        Javalin app = App.javalin(createMockRoutes(), List.of("https://custom.example.com"));
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
+            assertEquals("https://custom.example.com", response.headers().get("Access-Control-Allow-Origin").getFirst());
+            assertNull(response.headers().get("Access-Control-Allow-Credentials"));
+        });
+    }
+
+    @Test
+    void shouldSendCorsCredentialsWhenEnabled() {
+        Javalin app = App.javalin(createMockRoutes(), List.of("https://custom.example.com"), true, new SimpleMeterRegistry());
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/service/info", request -> request.header("Origin", "https://custom.example.com"));
+            assertEquals("true", response.headers().get("Access-Control-Allow-Credentials").getFirst());
         });
     }
 
@@ -143,7 +165,7 @@ class AppTest {
         int port = findAvailablePort();
         int managementPort = findAvailablePort();
         ApplicationConfiguration config = new ApplicationConfiguration(
-            new HttpConfiguration(port, List.of()),
+            new HttpConfiguration(port, List.of(), false),
             new ManagementConfiguration(managementPort)
         );
 

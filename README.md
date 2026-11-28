@@ -75,6 +75,7 @@ Configuration is read from `api/src/main/resources/application.conf` and overrid
 | Variable               | Default | Notes                                       |
 |------------------------|---------|---------------------------------------------|
 | `HTTP_PORT`            | `8080`  | Port the server binds to.                   |
+| `HTTP_ALLOW_CREDENTIALS` | `false` | Send `Access-Control-Allow-Credentials: true` on CORS responses. Keep off unless the API authenticates by cookie; set per environment via `allow_credentials`. |
 | `MANAGEMENT_PORT`      | `9090`  | Port of the internal management server (`/metrics`). |
 | `HTTP_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Comma-separated CORS origins (wildcard subdomains such as `https://*.example.com` are allowed). Replaces the default; set per environment in `playbooks/{dev,staging,production}-deploy.yml`. Empty disables CORS. |
 

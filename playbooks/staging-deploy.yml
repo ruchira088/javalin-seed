@@ -8,6 +8,8 @@
         hostname: staging.javalin-seed.home.ruchij.com
         aws_ssm_k8s_config: /infrastructure/dev/k8s/config
         allowed_origins: ["https://*.ruchij.com", "https://*.home.ruchij.com"]
+        # Off: the API has no cookie auth, and with wildcard origins credentials would reach every matching subdomain
+        allow_credentials: false
         min_replicas: 1
         app_log_level: DEBUG
 

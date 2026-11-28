@@ -47,7 +47,12 @@ public class App {
 
         Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
 
-        Javalin app = javalin(routes, applicationConfiguration.httpConfiguration().allowedOrigins(), meterRegistry);
+        Javalin app = javalin(
+            routes,
+            applicationConfiguration.httpConfiguration().allowedOrigins(),
+            applicationConfiguration.httpConfiguration().allowCredentials(),
+            meterRegistry
+        );
         app.start(applicationConfiguration.httpConfiguration().port());
 
         Javalin managementApp = managementJavalin(meterRegistry);
@@ -67,12 +72,15 @@ public class App {
         }));
     }
 
-    /** {@link #javalin(Routes, List, MeterRegistry)} with request metrics recorded into a throwaway registry. */
+    /**
+     * {@link #javalin(Routes, List, boolean, MeterRegistry)} without CORS credentials and with request metrics recorded
+     * into a throwaway registry.
+     */
     public static Javalin javalin(Routes routes, List<String> allowedOrigins) {
-        return javalin(routes, allowedOrigins, new SimpleMeterRegistry());
+        return javalin(routes, allowedOrigins, false, new SimpleMeterRegistry());
     }
 
-    public static Javalin javalin(Routes routes, List<String> allowedOrigins, MeterRegistry meterRegistry) {
+    public static Javalin javalin(Routes routes, List<String> allowedOrigins, boolean allowCredentials, MeterRegistry meterRegistry) {
         RequestMetrics requestMetrics = new RequestMetrics(meterRegistry);
 
         return Javalin.create(javalinConfig -> {
@@ -88,7 +96,7 @@ public class App {
                     cors.addRule(rule -> {
                         allowedOrigins.forEach(rule::allowHost);
 
-                        rule.allowCredentials = true;
+                        rule.allowCredentials = allowCredentials;
                     });
                 });
             }

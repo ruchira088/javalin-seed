@@ -1,9 +1,14 @@
 package com.ruchij.web.middleware;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ruchij.App;
 import com.ruchij.exceptions.ResourceConflictException;
 import com.ruchij.exceptions.ResourceNotFoundException;
@@ -14,23 +19,17 @@ import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import com.ruchij.web.json.RequestBodyJsonMapper;
 import com.ruchij.web.responses.ProblemDetail;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.javalin.Javalin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.HttpStatus;
 import io.javalin.json.JavalinJackson;
 import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
+import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ExceptionMapperTest {
 
@@ -129,9 +128,8 @@ class ExceptionMapperTest {
     void shouldReturn404ForNonMatchingRoute() {
         HealthService healthService = Mockito.mock(HealthService.class);
         Mockito.when(healthService.serviceInformation())
-            .thenReturn(new ServiceInformation(
-                "test", "21", "8.0", Instant.now(), "main", "abc123", Instant.now()
-            ));
+                .thenReturn(
+                        new ServiceInformation("test", "21", "8.0", Instant.now(), "main", "abc123", Instant.now()));
 
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
@@ -243,7 +241,7 @@ class ExceptionMapperTest {
 
         JavalinTest.test(app, (server, client) -> {
             Response response =
-                client.get("/missing", request -> request.header(CorrelationId.HEADER_NAME, "problem-test"));
+                    client.get("/missing", request -> request.header(CorrelationId.HEADER_NAME, "problem-test"));
 
             assertContentType(response);
             JsonNode body = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
@@ -271,14 +269,17 @@ class ExceptionMapperTest {
 
     @Test
     void shouldMapJavalinValidatorFailuresToProblemDetailWithFieldErrors() {
-        Javalin app = createAppWithRoute(ctx -> ctx.result(String.valueOf(ctx.queryParamAsClass("limit", Integer.class).get())));
+        Javalin app = createAppWithRoute(ctx -> ctx.result(
+                String.valueOf(ctx.queryParamAsClass("limit", Integer.class).get())));
 
         JavalinTest.test(app, (server, client) -> {
             Response response = client.get("/test?limit=abc");
             assertEquals(400, response.code());
 
             JsonNode body = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
-            assertEquals("The request contains invalid parameters", body.get("detail").asText());
+            assertEquals(
+                    "The request contains invalid parameters",
+                    body.get("detail").asText());
             assertEquals("TYPE_CONVERSION_FAILED", body.at("/errors/limit/0").asText());
             assertFalse(body.toString().contains("abc"), "rejected values must not be echoed");
         });
@@ -297,7 +298,9 @@ class ExceptionMapperTest {
 
         JsonNode body = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
         assertEquals(ProblemDetail.DEFAULT_TYPE, body.get("type").asText());
-        assertEquals(HttpStatus.forStatus(response.code()).getMessage(), body.get("title").asText());
+        assertEquals(
+                HttpStatus.forStatus(response.code()).getMessage(),
+                body.get("title").asText());
         assertEquals(response.code(), body.get("status").asInt());
         assertEquals(expectedDetail, body.get("detail").asText());
     }

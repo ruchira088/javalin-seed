@@ -18,21 +18,20 @@ public final class RequestLogging {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestLogging.class);
 
-    private RequestLogging() {
-    }
+    private RequestLogging() {}
 
     public static void log(Context context, Float executionTimeMs) {
         String userAgent = context.userAgent();
         Level level = userAgent != null && userAgent.startsWith(PROBE_USER_AGENT_PREFIX) ? Level.DEBUG : Level.INFO;
 
         try (var _ = MDC.putCloseable(CorrelationId.MDC_KEY, context.attribute(CorrelationId.MDC_KEY))) {
-            logger.atLevel(level).log(
-                "{} {} {} {}ms",
-                context.method(),
-                context.path(),
-                context.statusCode(),
-                "%.1f".formatted(executionTimeMs)
-            );
+            logger.atLevel(level)
+                    .log(
+                            "{} {} {} {}ms",
+                            context.method(),
+                            context.path(),
+                            context.statusCode(),
+                            "%.1f".formatted(executionTimeMs));
         }
     }
 }

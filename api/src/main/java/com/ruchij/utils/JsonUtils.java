@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-
 import java.io.IOException;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -32,22 +31,23 @@ public class JsonUtils {
 
     private static class InstantSerializer extends JsonSerializer<Instant> {
         @Override
-        public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializers) throws IOException {
+        public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializers)
+                throws IOException {
             jsonGenerator.writeString(instant.toString());
         }
     }
 
     private static class InstantDeserializer extends JsonDeserializer<Instant> {
         @Override
-        public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+        public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+                throws IOException {
             String isoTimestamp = jsonParser.getValueAsString();
 
             try {
                 return Instant.parse(isoTimestamp);
             } catch (DateTimeParseException exception) {
                 return (Instant) deserializationContext.handleWeirdStringValue(
-                    Instant.class, isoTimestamp, "expected an ISO-8601 instant"
-                );
+                        Instant.class, isoTimestamp, "expected an ISO-8601 instant");
             }
         }
     }

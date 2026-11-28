@@ -1,15 +1,14 @@
 package com.ruchij.service.health;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.service.health.models.ServiceInformation;
-import org.junit.jupiter.api.Test;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Properties;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class HealthServiceImplTest {
 
@@ -22,14 +21,8 @@ class HealthServiceImplTest {
         properties.setProperty("java.version", "21.0.1");
 
         Instant buildTimestamp = Instant.parse("2024-01-14T08:00:00Z");
-        BuildInformation buildInformation = new BuildInformation(
-            "test-app",
-            "com.test",
-            "8.5",
-            buildTimestamp,
-            "feature-branch",
-            "abc123"
-        );
+        BuildInformation buildInformation =
+                new BuildInformation("test-app", "com.test", "8.5", buildTimestamp, "feature-branch", "abc123");
 
         HealthServiceImpl healthService = new HealthServiceImpl(fixedClock, properties, buildInformation);
 
@@ -51,14 +44,8 @@ class HealthServiceImplTest {
 
         Properties properties = new Properties();
 
-        BuildInformation buildInformation = new BuildInformation(
-            "test-app",
-            "com.test",
-            "8.5",
-            fixedInstant,
-            "main",
-            "def456"
-        );
+        BuildInformation buildInformation =
+                new BuildInformation("test-app", "com.test", "8.5", fixedInstant, "main", "def456");
 
         HealthServiceImpl healthService = new HealthServiceImpl(fixedClock, properties, buildInformation);
 
@@ -75,14 +62,8 @@ class HealthServiceImplTest {
         Properties properties = new Properties();
         properties.setProperty("java.version", "21");
 
-        BuildInformation buildInformation = new BuildInformation(
-            "test-app",
-            "com.test",
-            "8.5",
-            firstInstant,
-            "main",
-            "xyz789"
-        );
+        BuildInformation buildInformation =
+                new BuildInformation("test-app", "com.test", "8.5", firstInstant, "main", "xyz789");
 
         Clock firstClock = Clock.fixed(firstInstant, ZoneId.of("UTC"));
         HealthServiceImpl healthService1 = new HealthServiceImpl(firstClock, properties, buildInformation);

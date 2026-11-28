@@ -1,25 +1,17 @@
 package com.ruchij.service.health.models;
 
 import com.ruchij.build.BuildInfo;
-
 import java.time.Instant;
 
 public record BuildInformation(
-    String name,
-    String group,
-    String gradleVersion,
-    Instant buildTimestamp,
-    String gitBranch,
-    String gitCommit
-) {
+        String name, String group, String gradleVersion, Instant buildTimestamp, String gitBranch, String gitCommit) {
     public static BuildInformation get() {
         return new BuildInformation(
-            BuildInfo.APPLICATION_NAME,
-            BuildInfo.APPLICATION_GROUP,
-            BuildInfo.GRADLE_VERSION,
-            BuildInfo.BUILD_TIMESTAMP,
-            BuildInfo.GIT_BRANCH,
-            BuildInfo.GIT_COMMIT
-        );
+                BuildInfo.APPLICATION_NAME,
+                BuildInfo.APPLICATION_GROUP,
+                BuildInfo.GRADLE_VERSION,
+                BuildInfo.BUILD_TIMESTAMP,
+                BuildInfo.GIT_BRANCH,
+                BuildInfo.GIT_COMMIT);
     }
 }

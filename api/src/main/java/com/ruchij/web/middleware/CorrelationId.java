@@ -2,12 +2,11 @@ package com.ruchij.web.middleware;
 
 import io.javalin.config.RoutesConfig;
 import io.javalin.http.Context;
-import org.slf4j.MDC;
-
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.MDC;
 
 /**
  * Propagates a correlation ID through each request: it is read from the {@value #HEADER_NAME} request header,
@@ -28,13 +27,12 @@ public final class CorrelationId {
 
     // W3C Trace Context: version-traceid-parentid-flags, lower-case hex. Version ff is forbidden, and later versions
     // may append fields, which are allowed only when the version is not 00.
-    private static final Pattern TRACEPARENT =
-        Pattern.compile("(?<version>[0-9a-f]{2})-(?<traceId>[0-9a-f]{32})-(?<parentId>[0-9a-f]{16})-[0-9a-f]{2}(?<rest>-.*)?");
+    private static final Pattern TRACEPARENT = Pattern.compile(
+            "(?<version>[0-9a-f]{2})-(?<traceId>[0-9a-f]{32})-(?<parentId>[0-9a-f]{16})-[0-9a-f]{2}(?<rest>-.*)?");
     private static final String INVALID_TRACE_ID = "0".repeat(32);
     private static final String INVALID_PARENT_ID = "0".repeat(16);
 
-    private CorrelationId() {
-    }
+    private CorrelationId() {}
 
     public static void register(RoutesConfig routes) {
         routes.before(CorrelationId::start);
@@ -43,9 +41,11 @@ public final class CorrelationId {
 
     static void start(Context context) {
         String header = context.header(HEADER_NAME);
-        String correlationId = header != null && VALID_CORRELATION_ID.matcher(header).matches()
-            ? header
-            : traceId(context.header(TRACEPARENT_HEADER)).orElseGet(() -> UUID.randomUUID().toString());
+        String correlationId =
+                header != null && VALID_CORRELATION_ID.matcher(header).matches()
+                        ? header
+                        : traceId(context.header(TRACEPARENT_HEADER))
+                                .orElseGet(() -> UUID.randomUUID().toString());
 
         MDC.put(MDC_KEY, correlationId);
         context.attribute(MDC_KEY, correlationId);
@@ -65,7 +65,8 @@ public final class CorrelationId {
         String version = matcher.group("version");
         boolean validVersion = !version.equals("ff") && (matcher.group("rest") == null || !version.equals("00"));
         String traceId = matcher.group("traceId");
-        boolean validIds = !traceId.equals(INVALID_TRACE_ID) && !matcher.group("parentId").equals(INVALID_PARENT_ID);
+        boolean validIds =
+                !traceId.equals(INVALID_TRACE_ID) && !matcher.group("parentId").equals(INVALID_PARENT_ID);
 
         return validVersion && validIds ? Optional.of(traceId) : Optional.empty();
     }

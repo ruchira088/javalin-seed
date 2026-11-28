@@ -1,5 +1,9 @@
 package com.ruchij.web.middleware;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.ruchij.App;
 import com.ruchij.config.HttpConfiguration;
 import com.ruchij.service.health.HealthService;
@@ -8,16 +12,11 @@ import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class RequestMetricsTest {
 
@@ -45,7 +44,10 @@ class RequestMetricsTest {
     @Test
     void shouldGroupUnmatchedRequestsUnderNotFound() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), new HttpConfiguration(0, List.of(), false, true), registry);
+        Javalin app = App.javalin(
+                new Routes(Mockito.mock(HealthService.class)),
+                new HttpConfiguration(0, List.of(), false, true),
+                registry);
 
         JavalinTest.test(app, (server, client) -> {
             client.get("/does-not-exist/123");
@@ -60,7 +62,8 @@ class RequestMetricsTest {
     private static Timer awaitTimer(SimpleMeterRegistry registry, String uri) throws InterruptedException {
         Instant deadline = Instant.now().plus(Duration.ofSeconds(5));
         while (Instant.now().isBefore(deadline)) {
-            Timer timer = registry.find(RequestMetrics.METRIC_NAME).tag("uri", uri).timer();
+            Timer timer =
+                    registry.find(RequestMetrics.METRIC_NAME).tag("uri", uri).timer();
             if (timer != null && timer.count() > 0) {
                 return timer;
             }

@@ -1,9 +1,12 @@
 package com.ruchij.web.json;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import com.ruchij.exceptions.InvalidRequestBodyException;
 import com.ruchij.utils.JsonUtils;
-import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,11 +15,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 class RequestBodyJsonMapperTest {
     private final RequestBodyJsonMapper jsonMapper = new RequestBodyJsonMapper(JsonUtils.OBJECT_MAPPER);
@@ -24,8 +23,8 @@ class RequestBodyJsonMapperTest {
     @Test
     void shouldReadValidJsonFromStringAndStream() {
         Map<String, Integer> fromString = jsonMapper.fromJsonString("{\"a\":1}", Map.class);
-        Map<String, Integer> fromStream =
-            jsonMapper.fromJsonStream(new ByteArrayInputStream("{\"a\":1}".getBytes(StandardCharsets.UTF_8)), Map.class);
+        Map<String, Integer> fromStream = jsonMapper.fromJsonStream(
+                new ByteArrayInputStream("{\"a\":1}".getBytes(StandardCharsets.UTF_8)), Map.class);
 
         assertEquals(Map.of("a", 1), fromString);
         assertEquals(Map.of("a", 1), fromStream);
@@ -34,11 +33,10 @@ class RequestBodyJsonMapperTest {
     @Test
     void shouldTranslateUnreadableJsonToInvalidRequestBody() {
         InvalidRequestBodyException fromString =
-            assertThrows(InvalidRequestBodyException.class, () -> jsonMapper.fromJsonString("{", Map.class));
+                assertThrows(InvalidRequestBodyException.class, () -> jsonMapper.fromJsonString("{", Map.class));
         InvalidRequestBodyException fromStream = assertThrows(
-            InvalidRequestBodyException.class,
-            () -> jsonMapper.fromJsonStream(new ByteArrayInputStream(new byte[] {'['}), Map.class)
-        );
+                InvalidRequestBodyException.class,
+                () -> jsonMapper.fromJsonStream(new ByteArrayInputStream(new byte[] {'['}), Map.class));
 
         assertEquals(InvalidRequestBodyException.MESSAGE, fromString.getMessage());
         assertEquals(InvalidRequestBodyException.MESSAGE, fromStream.getMessage());
@@ -48,8 +46,8 @@ class RequestBodyJsonMapperTest {
     void shouldRethrowRuntimeExceptionsUnchanged() {
         UncheckedIOException failure = new UncheckedIOException(new IOException("socket closed"));
 
-        RuntimeException thrown =
-            assertThrows(RuntimeException.class, () -> jsonMapper.fromJsonStream(failingStream(failure), Map.class));
+        RuntimeException thrown = assertThrows(
+                RuntimeException.class, () -> jsonMapper.fromJsonStream(failingStream(failure), Map.class));
 
         assertSame(failure, thrown);
     }
@@ -57,9 +55,8 @@ class RequestBodyJsonMapperTest {
     @Test
     void shouldWrapCheckedNonJacksonExceptions() {
         IllegalStateException thrown = assertThrows(
-            IllegalStateException.class,
-            () -> jsonMapper.fromJsonStream(failingStream(new IOException("socket closed")), Map.class)
-        );
+                IllegalStateException.class,
+                () -> jsonMapper.fromJsonStream(failingStream(new IOException("socket closed")), Map.class));
 
         assertInstanceOf(IOException.class, thrown.getCause());
     }

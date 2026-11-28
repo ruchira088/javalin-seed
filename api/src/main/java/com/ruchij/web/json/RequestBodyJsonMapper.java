@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruchij.exceptions.InvalidRequestBodyException;
 import io.javalin.json.JavalinJackson;
 import io.javalin.json.JsonMapper;
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
@@ -66,6 +65,8 @@ public final class RequestBodyJsonMapper implements JsonMapper {
             return new InvalidRequestBodyException(exception);
         }
 
-        return exception instanceof RuntimeException runtimeException ? runtimeException : new IllegalStateException(exception);
+        return exception instanceof RuntimeException runtimeException
+                ? runtimeException
+                : new IllegalStateException(exception);
     }
 }

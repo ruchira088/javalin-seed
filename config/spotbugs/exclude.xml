@@ -14,6 +14,7 @@
             <Class name="com.ruchij.web.Routes"/>
             <Class name="com.ruchij.service.health.HealthServiceImpl"/>
             <Class name="com.ruchij.web.middleware.RequestMetrics"/>
+            <Class name="com.ruchij.web.responses.ProblemDetail"/>
         </Or>
     </Match>
 </FindBugsFilter>

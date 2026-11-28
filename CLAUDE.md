@@ -34,8 +34,9 @@ Reports land under `api/build/reports/` (`tests/test/`, `jacoco/test/html/`, `ch
 
 ## Build constraints that will bite you
 
-- **`-Xlint:all -Werror`** is set for every `JavaCompile` task: any compiler warning (deprecation, unchecked,
-  unused varargs…) fails the build.
+- **`-Xlint:all,-processing -Werror`** is set for every `JavaCompile` task: any compiler warning (deprecation,
+  unchecked, unused varargs…) fails the build. Only `processing` is off, because with the OpenAPI annotation processor
+  present javac otherwise rejects runtime annotations like `@JsonInclude` as "not claimed by any processor".
 - **JaCoCo coverage floor**: `check` runs `jacocoTestCoverageVerification`, which fails the build if line coverage
   drops below 90% (the generated `com.ruchij.build` package is excluded). Compilation uses a Gradle JDK toolchain
   (`languageVersion = 25`), so a JDK 25 must be installed locally — Gradle auto-detects SDKMAN/Homebrew installs.
@@ -67,7 +68,10 @@ are silently missing from the spec), and mount it in `Routes.addEndpoints()`.
 
 **Error handling**: throw one of the exceptions in `com.ruchij.exceptions` (`ValidationException` → 400,
 `ResourceNotFoundException` → 404, `ResourceConflictException` → 409); `web/middleware/ExceptionMapper` converts
-them to an `ErrorResponse` JSON body carrying the exception message, so those messages must be safe to show callers.
+them to an RFC 9457 `ProblemDetail` body (`application/problem+json`: `type`, `title`, `status`, `detail`,
+`instance`, plus `correlationId` and, for Javalin validator failures, `errors`) whose `detail` is the exception
+message, so those messages must be safe to show callers. Javalin's own `HttpResponseException`s (`BadRequestResponse`…)
+and `io.javalin.validation.ValidationException` are mapped to the same shape; rejected values are never echoed.
 Anything else becomes a 500 that is logged at ERROR with its stack trace and returns only a generic message. New
 exception types need a line in `ExceptionMapper.handle(RoutesConfig)`. Request bodies are read through
 `web/json/RequestBodyJsonMapper`, which turns any Jackson failure in `ctx.bodyAsClass(...)` into

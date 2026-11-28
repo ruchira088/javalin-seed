@@ -55,7 +55,7 @@ Reports land under `api/build/reports/` (`tests/test/`, `jacoco/test/html/`, `ch
 ## Architecture
 
 **Bootstrap chain** (`com.ruchij.App`): `main` → `ConfigFactory.load()` → `ApplicationConfiguration.parse` →
-`run` → `App.javalin(Routes, allowedOrigins)`. `App.javalin` is the seam tests use — it builds a fully configured
+`run` → `App.javalin(Routes, allowedOrigins, meterRegistry)` (+ `App.managementJavalin` on the management port). `App.javalin` is the seam tests use — it builds a fully configured
 `Javalin` instance (virtual threads, Jackson via `JsonUtils.OBJECT_MAPPER`, CORS, OpenAPI + Swagger plugins,
 routes, exception mapping) without starting it. There is no DI framework; services are constructed in
 `App.routes(...)` and passed into `Routes` by constructor.
@@ -93,6 +93,14 @@ variables override file values. Optional keys are read through `ConfigReaders.op
 `ConfigException.Missing` into `Optional.empty()`. Config is parsed into records (`ApplicationConfiguration`,
 `HttpConfiguration`) up front, so the rest of the app never touches `Config`.
 
+**Metrics**: `App.run` builds a `PrometheusMeterRegistry` (`metrics/MetricsRegistry`: JVM/process binders, common
+`application` tag) and passes it to `App.javalin(routes, origins, registry)`; the two-argument overload used by tests
+records into a throwaway `SimpleMeterRegistry`. `web/middleware/RequestMetrics` records `http.server.requests` from
+the same request-logger callback as `RequestLogging`, tagging `uri` with the matched route *template* (or
+`NOT_FOUND`) — never the raw path, which would explode series cardinality. `/metrics` is served by a separate bare
+`App.managementJavalin` on `management.port` (`MANAGEMENT_PORT`, 9090; `19998` in test config), which the K8s Service
+and Ingress do not expose.
+
 **Health/build info**: `GET /service/health` is a dependency-free 200 used by all three K8s probes.
 `GET /service/info` (`ServiceRoute` → `HealthService`) combines `BuildInformation` with JVM properties and a `Clock`. `ApiLoggerContextListener` also reads `BuildInformation` to inject `app.name`,
 `git.branch`, `git.commit`, and `APP_HOSTNAME` into the Logback context for structured (logstash) logging.
@@ -101,8 +109,8 @@ variables override file values. Optional keys are read through `ConfigReaders.op
 
 JUnit Jupiter (BOM 6.x) + Mockito. HTTP-level tests use `JavalinTest.test(App.javalin(routes, List.of()), ...)`
 with a mocked `HealthService`, so they exercise real routing, JSON, and exception mapping without a fixed port.
-`api/src/test/resources/application.conf` overrides the port to `19999`; `AppTest.shouldStartServerWithMainMethod`
-depends on that value.
+`api/src/test/resources/application.conf` overrides the port to `19999` (management `19998`);
+`AppTest.shouldStartServerWithMainMethod` depends on those values.
 
 ## Deployment
 

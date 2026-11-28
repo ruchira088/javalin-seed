@@ -75,6 +75,7 @@ Configuration is read from `api/src/main/resources/application.conf` and overrid
 | Variable               | Default | Notes                                       |
 |------------------------|---------|---------------------------------------------|
 | `HTTP_PORT`            | `8080`  | Port the server binds to.                   |
+| `MANAGEMENT_PORT`      | `9090`  | Port of the internal management server (`/metrics`). |
 | `HTTP_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Comma-separated CORS origins (wildcard subdomains such as `https://*.example.com` are allowed). Replaces the default; set per environment in `playbooks/{dev,staging,production}-deploy.yml`. Empty disables CORS. |
 
 ### Endpoints
@@ -83,6 +84,10 @@ Configuration is read from `api/src/main/resources/application.conf` and overrid
 - `GET /service/health` — `{"status":"ok"}`; used by the Kubernetes probes.
 - `GET /openapi.json` — OpenAPI 3 specification.
 - `GET /swagger` — Swagger UI.
+- `GET /metrics` on the **management port** (`MANAGEMENT_PORT`, default `9090`) — Prometheus metrics: JVM/process
+  meters and an `http_server_requests_seconds` histogram tagged by method, route template, status and outcome. The
+  port is not part of the K8s Service, so it is never exposed through the Ingress; pods carry `prometheus.io/*`
+  scrape annotations.
 
 ## Deployment
 

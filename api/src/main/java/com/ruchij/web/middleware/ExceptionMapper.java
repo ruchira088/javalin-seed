@@ -1,5 +1,6 @@
 package com.ruchij.web.middleware;
 
+import com.ruchij.exceptions.InvalidRequestBodyException;
 import com.ruchij.exceptions.ResourceConflictException;
 import com.ruchij.exceptions.ResourceNotFoundException;
 import com.ruchij.exceptions.ValidationException;
@@ -35,14 +36,18 @@ public class ExceptionMapper {
     public static void handle(RoutesConfig routes) {
         routes.exception(ValidationException.class, ExceptionMapper.handle(HttpStatus.BAD_REQUEST));
 
+        routes.exception(InvalidRequestBodyException.class, ExceptionMapper.handle(HttpStatus.BAD_REQUEST));
+
         routes.exception(ResourceNotFoundException.class, ExceptionMapper.handle(HttpStatus.NOT_FOUND));
 
         routes.exception(ResourceConflictException.class, ExceptionMapper.handle(HttpStatus.CONFLICT));
 
         routes.exception(Exception.class, ExceptionMapper.handleUnexpected());
 
+        // Only answer for requests no GET/POST/... handler matched; a handler that sets 404 itself keeps its own body.
+        // (endpoint() is not usable here: it throws when no endpoint at all, not even a before handler, matched.)
         routes.error(HttpStatus.NOT_FOUND, context -> {
-            if (context.endpoint().path.equals("*")) {
+            if (context.endpoints().lastHttpEndpoint() == null) {
                 context
                     .status(HttpStatus.NOT_FOUND)
                     .json(

@@ -15,6 +15,7 @@ import com.ruchij.exceptions.ResourceNotFoundException;
 import com.ruchij.exceptions.ValidationException;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import com.ruchij.web.json.RequestBodyJsonMapper;
@@ -23,7 +24,6 @@ import io.javalin.Javalin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.HttpStatus;
 import io.javalin.json.JavalinJackson;
-import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
 import java.time.Instant;
 import java.util.List;
@@ -47,7 +47,7 @@ class ExceptionMapperTest {
             throw new ValidationException("Invalid input provided");
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(400, response.code());
 
@@ -61,7 +61,7 @@ class ExceptionMapperTest {
             throw new ResourceNotFoundException("User not found");
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(404, response.code());
 
@@ -75,7 +75,7 @@ class ExceptionMapperTest {
             throw new ResourceConflictException("Resource already exists");
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(409, response.code());
 
@@ -89,7 +89,7 @@ class ExceptionMapperTest {
             throw new RuntimeException("Connection refused: db.internal:5432");
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(500, response.code());
 
@@ -110,7 +110,7 @@ class ExceptionMapperTest {
         logger.addAppender(appender);
 
         try {
-            JavalinTest.test(app, (server, client) -> {
+            JavalinTestSupport.test(app, (server, client) -> {
                 client.get("/test");
 
                 assertEquals(1, appender.list.size());
@@ -134,7 +134,7 @@ class ExceptionMapperTest {
         Routes routes = new Routes(healthService);
         Javalin app = App.javalin(routes, List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/non-existing-route");
             assertEquals(404, response.code());
 
@@ -159,7 +159,7 @@ class ExceptionMapperTest {
             ExceptionMapper.handle(config.routes);
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(400, response.code());
             assertEquals("true", response.headers().get("X-Exception-Stored").getFirst());
@@ -176,7 +176,7 @@ class ExceptionMapperTest {
             ExceptionMapper.handle(config.routes);
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/explicit-404");
             assertEquals(404, response.code());
             assertEquals("Custom not found", response.body().string());
@@ -188,7 +188,7 @@ class ExceptionMapperTest {
         HealthService healthService = Mockito.mock(HealthService.class);
         Javalin app = App.javalin(new Routes(healthService), List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.post("/service/health", "");
             assertEquals(404, response.code());
 
@@ -215,7 +215,7 @@ class ExceptionMapperTest {
             ExceptionMapper.handle(config.routes);
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.post("/test", body);
             assertEquals(400, response.code());
 
@@ -227,7 +227,7 @@ class ExceptionMapperTest {
     void shouldReturn404ForUnmatchedRouteWithoutAnyBeforeHandlers() {
         Javalin app = createAppWithRoute(ctx -> ctx.result("ok"));
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.post("/test", "");
             assertEquals(404, response.code());
 
@@ -239,7 +239,7 @@ class ExceptionMapperTest {
     void shouldReturnProblemDetailWithInstanceAndCorrelationId() {
         Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response =
                     client.get("/missing", request -> request.header(CorrelationId.HEADER_NAME, "problem-test"));
 
@@ -260,7 +260,7 @@ class ExceptionMapperTest {
             throw new BadRequestResponse("Missing tenant");
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test");
             assertEquals(400, response.code());
             assertProblem(response, "Missing tenant");
@@ -272,7 +272,7 @@ class ExceptionMapperTest {
         Javalin app = createAppWithRoute(ctx -> ctx.result(
                 String.valueOf(ctx.queryParamAsClass("limit", Integer.class).get())));
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Response response = client.get("/test?limit=abc");
             assertEquals(400, response.code());
 

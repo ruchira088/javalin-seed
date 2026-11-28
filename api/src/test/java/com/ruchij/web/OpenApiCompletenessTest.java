@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ruchij.App;
 import com.ruchij.service.health.HealthService;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.utils.JsonUtils;
 import io.javalin.Javalin;
 import io.javalin.router.Endpoint;
-import io.javalin.testtools.JavalinTest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -31,7 +31,7 @@ class OpenApiCompletenessTest {
     void shouldDocumentEveryRegisteredHttpEndpoint() {
         Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), List.of());
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             Set<String> routed = new TreeSet<>();
             for (var parsedEndpoint : app.unsafe.internalRouter.allHttpHandlers()) {
                 Endpoint endpoint = parsedEndpoint.endpoint;

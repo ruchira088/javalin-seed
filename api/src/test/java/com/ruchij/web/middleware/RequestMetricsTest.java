@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.ruchij.App;
 import com.ruchij.config.HttpConfiguration;
 import com.ruchij.service.health.HealthService;
+import com.ruchij.testing.JavalinTestSupport;
 import com.ruchij.web.Routes;
 import io.javalin.Javalin;
-import io.javalin.testtools.JavalinTest;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
@@ -29,7 +29,7 @@ class RequestMetricsTest {
             config.requestLogger.http(requestMetrics::record);
         });
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             client.get("/users/1");
             client.get("/users/2");
 
@@ -49,7 +49,7 @@ class RequestMetricsTest {
                 new HttpConfiguration(0, List.of(), false, true),
                 registry);
 
-        JavalinTest.test(app, (server, client) -> {
+        JavalinTestSupport.test(app, (server, client) -> {
             client.get("/does-not-exist/123");
 
             Timer timer = awaitTimer(registry, RequestMetrics.NOT_FOUND_URI);

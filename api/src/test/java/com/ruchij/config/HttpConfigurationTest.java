@@ -22,6 +22,14 @@ class HttpConfigurationTest {
         assertEquals(8080, httpConfig.port());
         assertTrue(httpConfig.allowedOrigins().isEmpty());
         assertFalse(httpConfig.allowCredentials());
+        assertTrue(httpConfig.apiDocsEnabled());
+    }
+
+    @Test
+    void shouldParseApiDocsEnabled() {
+        Config config = ConfigFactory.parseMap(Map.of("port", 8080, "api-docs-enabled", false));
+
+        assertFalse(HttpConfiguration.parse(config).apiDocsEnabled());
     }
 
     @Test

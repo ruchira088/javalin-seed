@@ -1,6 +1,7 @@
 package com.ruchij.web.middleware;
 
 import com.ruchij.App;
+import com.ruchij.config.HttpConfiguration;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.web.Routes;
 import io.javalin.Javalin;
@@ -44,7 +45,7 @@ class RequestMetricsTest {
     @Test
     void shouldGroupUnmatchedRequestsUnderNotFound() {
         SimpleMeterRegistry registry = new SimpleMeterRegistry();
-        Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), List.of(), false, registry);
+        Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), new HttpConfiguration(0, List.of(), false, true), registry);
 
         JavalinTest.test(app, (server, client) -> {
             client.get("/does-not-exist/123");

@@ -5,7 +5,7 @@ import com.typesafe.config.Config;
 import java.util.Arrays;
 import java.util.List;
 
-public record HttpConfiguration(int port, List<String> allowedOrigins, boolean allowCredentials) {
+public record HttpConfiguration(int port, List<String> allowedOrigins, boolean allowCredentials, boolean apiDocsEnabled) {
     public static HttpConfiguration parse(Config config) {
         int port = config.getInt("port");
 
@@ -19,6 +19,8 @@ public record HttpConfiguration(int port, List<String> allowedOrigins, boolean a
 
         boolean allowCredentials = ConfigReaders.optionalConfig(() -> config.getBoolean("allow-credentials")).orElse(false);
 
-        return new HttpConfiguration(port, allowedOrigins, allowCredentials);
+        boolean apiDocsEnabled = ConfigReaders.optionalConfig(() -> config.getBoolean("api-docs-enabled")).orElse(true);
+
+        return new HttpConfiguration(port, allowedOrigins, allowCredentials, apiDocsEnabled);
     }
 }

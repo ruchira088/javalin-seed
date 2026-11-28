@@ -56,7 +56,7 @@ Reports land under `api/build/reports/` (`tests/test/`, `jacoco/test/html/`, `ch
 ## Architecture
 
 **Bootstrap chain** (`com.ruchij.App`): `main` → `ConfigFactory.load()` → `ApplicationConfiguration.parse` →
-`run` → `App.javalin(Routes, allowedOrigins, meterRegistry)` (+ `App.managementJavalin` on the management port). `App.javalin` is the seam tests use — it builds a fully configured
+`run` → `App.javalin(Routes, HttpConfiguration, meterRegistry)` (+ `App.managementJavalin` on the management port). `App.javalin` is the seam tests use — it builds a fully configured
 `Javalin` instance (virtual threads, Jackson via `JsonUtils.OBJECT_MAPPER`, CORS, OpenAPI + Swagger plugins,
 routes, exception mapping) without starting it. There is no DI framework; services are constructed in
 `App.routes(...)` and passed into `Routes` by constructor.
@@ -94,6 +94,9 @@ a `kube-probe/` User-Agent are logged at DEBUG.
 `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and HSTS. There is no CSP
 because Swagger UI needs inline scripts.
 
+**API docs**: `/openapi.json` and `/swagger` are registered only when `http.api-docs-enabled` (`HTTP_API_DOCS_ENABLED`,
+playbook `api_docs_enabled`, default `true`) is on.
+
 **CORS**: origins come only from `http.allowed-origins` (`HTTP_ALLOWED_ORIGINS`), whose default in `application.conf`
 is the localhost dev servers; each deploy playbook sets `allowed_origins`. An empty list leaves the CORS plugin
 disabled — Javalin's plugin throws if enabled with no origins. `http.allow-credentials` (`HTTP_ALLOW_CREDENTIALS`,
@@ -106,8 +109,8 @@ variables override file values. Optional keys are read through `ConfigReaders.op
 `HttpConfiguration`) up front, so the rest of the app never touches `Config`.
 
 **Metrics**: `App.run` builds a `PrometheusMeterRegistry` (`metrics/MetricsRegistry`: JVM/process binders, common
-`application` tag) and passes it to `App.javalin(routes, origins, registry)`; the two-argument overload used by tests
-records into a throwaway `SimpleMeterRegistry`. `web/middleware/RequestMetrics` records `http.server.requests` from
+`application` tag) and passes it to `App.javalin(routes, httpConfiguration, registry)`; the two-argument `App.javalin(routes, origins)`
+overload used by tests records into a throwaway `SimpleMeterRegistry` (docs on, no CORS credentials). `web/middleware/RequestMetrics` records `http.server.requests` from
 the same request-logger callback as `RequestLogging`, tagging `uri` with the matched route *template* (or
 `NOT_FOUND`) — never the raw path, which would explode series cardinality. `/metrics` is served by a separate bare
 `App.managementJavalin` on `management.port` (`MANAGEMENT_PORT`, 9090; `19998` in test config), which the K8s Service
@@ -145,5 +148,5 @@ CI builds once: `compile-and-test` uploads `api.tar` as the `api-distribution` a
 downloads it and runs the playbook with `-e prebuilt_distribution=true`, which skips the Gradle build. The image
 therefore contains exactly the archive that passed `check`. The pod runs as UID 1001 with a read-only root filesystem
 (`/tmp` is an `emptyDir`), so the app must not write anywhere else. Per-environment knobs (`allowed_origins`,
-`allow_credentials`, `min_replicas`, `app_log_level`) live in `playbooks/{dev,staging,production}-deploy.yml`. Tasks that handle secrets
+`allow_credentials`, `api_docs_enabled`, `min_replicas`, `app_log_level`) live in `playbooks/{dev,staging,production}-deploy.yml`. Tasks that handle secrets
 carry `no_log: true` — keep it on any new task that touches SSM values, and don't add `-vvv` back to the workflows.

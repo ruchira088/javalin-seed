@@ -13,7 +13,10 @@ import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.utils.JsonUtils;
 import com.ruchij.web.Routes;
 import com.ruchij.web.json.RequestBodyJsonMapper;
+import com.ruchij.web.responses.ProblemDetail;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.javalin.Javalin;
+import io.javalin.http.BadRequestResponse;
 import io.javalin.http.HttpStatus;
 import io.javalin.json.JavalinJackson;
 import io.javalin.testtools.JavalinTest;
@@ -26,6 +29,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ExceptionMapperTest {
 
@@ -47,13 +52,7 @@ class ExceptionMapperTest {
             Response response = client.get("/test");
             assertEquals(400, response.code());
 
-            String expectedBody = """
-                {"error":"Invalid input provided"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "Invalid input provided");
         });
     }
 
@@ -67,13 +66,7 @@ class ExceptionMapperTest {
             Response response = client.get("/test");
             assertEquals(404, response.code());
 
-            String expectedBody = """
-                {"error":"User not found"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "User not found");
         });
     }
 
@@ -87,13 +80,7 @@ class ExceptionMapperTest {
             Response response = client.get("/test");
             assertEquals(409, response.code());
 
-            String expectedBody = """
-                {"error":"Resource already exists"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "Resource already exists");
         });
     }
 
@@ -107,13 +94,7 @@ class ExceptionMapperTest {
             Response response = client.get("/test");
             assertEquals(500, response.code());
 
-            String expectedBody = """
-                {"error":"An unexpected error occurred"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "An unexpected error occurred");
         });
     }
 
@@ -159,13 +140,7 @@ class ExceptionMapperTest {
             Response response = client.get("/non-existing-route");
             assertEquals(404, response.code());
 
-            String expectedBody = """
-                {"error":"No matching routes were found for GET /non-existing-route"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "No matching routes were found for GET /non-existing-route");
         });
     }
 
@@ -219,13 +194,7 @@ class ExceptionMapperTest {
             Response response = client.post("/service/health", "");
             assertEquals(404, response.code());
 
-            String expectedBody = """
-                {"error":"No matching routes were found for POST /service/health"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "No matching routes were found for POST /service/health");
         });
     }
 
@@ -252,13 +221,7 @@ class ExceptionMapperTest {
             Response response = client.post("/test", body);
             assertEquals(400, response.code());
 
-            String expectedBody = """
-                {"error":"The request body could not be parsed"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "The request body could not be parsed");
         });
     }
 
@@ -270,13 +233,72 @@ class ExceptionMapperTest {
             Response response = client.post("/test", "");
             assertEquals(404, response.code());
 
-            String expectedBody = """
-                {"error":"No matching routes were found for POST /test"}
-                """;
-            assertEquals(
-                JsonUtils.OBJECT_MAPPER.readTree(expectedBody),
-                JsonUtils.OBJECT_MAPPER.readTree(response.body().string())
-            );
+            assertProblem(response, "No matching routes were found for POST /test");
         });
+    }
+
+    @Test
+    void shouldReturnProblemDetailWithInstanceAndCorrelationId() {
+        Javalin app = App.javalin(new Routes(Mockito.mock(HealthService.class)), List.of());
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response =
+                client.get("/missing", request -> request.header(CorrelationId.HEADER_NAME, "problem-test"));
+
+            assertContentType(response);
+            JsonNode body = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
+            assertEquals("about:blank", body.get("type").asText());
+            assertEquals("Not Found", body.get("title").asText());
+            assertEquals(404, body.get("status").asInt());
+            assertEquals("/missing", body.get("instance").asText());
+            assertEquals("problem-test", body.get("correlationId").asText());
+            assertFalse(body.has("errors"));
+        });
+    }
+
+    @Test
+    void shouldMapJavalinHttpResponseExceptionsToProblemDetail() {
+        Javalin app = createAppWithRoute(ctx -> {
+            throw new BadRequestResponse("Missing tenant");
+        });
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/test");
+            assertEquals(400, response.code());
+            assertProblem(response, "Missing tenant");
+        });
+    }
+
+    @Test
+    void shouldMapJavalinValidatorFailuresToProblemDetailWithFieldErrors() {
+        Javalin app = createAppWithRoute(ctx -> ctx.result(String.valueOf(ctx.queryParamAsClass("limit", Integer.class).get())));
+
+        JavalinTest.test(app, (server, client) -> {
+            Response response = client.get("/test?limit=abc");
+            assertEquals(400, response.code());
+
+            JsonNode body = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
+            assertEquals("The request contains invalid parameters", body.get("detail").asText());
+            assertEquals("TYPE_CONVERSION_FAILED", body.at("/errors/limit/0").asText());
+            assertFalse(body.toString().contains("abc"), "rejected values must not be echoed");
+        });
+    }
+
+    // Jetty appends "; charset=utf-8", so compare only the media type.
+    private static void assertContentType(Response response) {
+        List<String> contentTypes = response.headers().get("Content-Type");
+        assertNotNull(contentTypes, "missing Content-Type");
+        String contentType = contentTypes.getFirst();
+        assertEquals(ProblemDetail.CONTENT_TYPE, contentType.split(";")[0].trim(), contentType);
+    }
+
+    private static void assertProblem(Response response, String expectedDetail) throws java.io.IOException {
+        assertContentType(response);
+
+        JsonNode body = JsonUtils.OBJECT_MAPPER.readTree(response.body().string());
+        assertEquals(ProblemDetail.DEFAULT_TYPE, body.get("type").asText());
+        assertEquals(HttpStatus.forStatus(response.code()).getMessage(), body.get("title").asText());
+        assertEquals(response.code(), body.get("status").asInt());
+        assertEquals(expectedDetail, body.get("detail").asText());
     }
 }

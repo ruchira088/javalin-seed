@@ -2,7 +2,7 @@ package com.ruchij.web.routes;
 
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
-import com.ruchij.web.responses.ErrorResponse;
+import com.ruchij.web.responses.ProblemDetail;
 import com.ruchij.web.responses.HealthCheckResponse;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.openapi.HttpMethod;
@@ -59,7 +59,7 @@ public class ServiceRoute implements EndpointGroup {
             @OpenApiResponse(
                 status = "500",
                 description = "Internal server error",
-                content = @OpenApiContent(from = ErrorResponse.class)
+                content = @OpenApiContent(from = ProblemDetail.class, type = ProblemDetail.CONTENT_TYPE)
             )
         }
     )

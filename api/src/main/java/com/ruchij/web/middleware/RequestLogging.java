@@ -1,6 +1,5 @@
 package com.ruchij.web.middleware;
 
-import io.javalin.config.RequestLoggerConfig;
 import io.javalin.http.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,11 +21,7 @@ public final class RequestLogging {
     private RequestLogging() {
     }
 
-    public static void register(RequestLoggerConfig requestLoggerConfig) {
-        requestLoggerConfig.http(RequestLogging::log);
-    }
-
-    static void log(Context context, Float executionTimeMs) {
+    public static void log(Context context, Float executionTimeMs) {
         String userAgent = context.userAgent();
         Level level = userAgent != null && userAgent.startsWith(PROBE_USER_AGENT_PREFIX) ? Level.DEBUG : Level.INFO;
 

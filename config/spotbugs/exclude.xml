@@ -13,6 +13,7 @@
             <Class name="com.ruchij.config.HttpConfiguration"/>
             <Class name="com.ruchij.web.Routes"/>
             <Class name="com.ruchij.service.health.HealthServiceImpl"/>
+            <Class name="com.ruchij.web.middleware.RequestMetrics"/>
         </Or>
     </Match>
 </FindBugsFilter>

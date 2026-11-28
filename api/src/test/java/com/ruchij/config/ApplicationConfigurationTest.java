@@ -14,19 +14,22 @@ class ApplicationConfigurationTest {
     @Test
     void shouldParseApplicationConfiguration() {
         Config config = ConfigFactory.parseMap(Map.of(
-            "http.port", 8080
+            "http.port", 8080,
+            "management.port", 9090
         ));
 
         ApplicationConfiguration appConfig = ApplicationConfiguration.parse(config);
 
         assertEquals(8080, appConfig.httpConfiguration().port());
+        assertEquals(9090, appConfig.managementConfiguration().port());
     }
 
     @Test
     void shouldParseFullConfiguration() {
         Config config = ConfigFactory.parseMap(Map.of(
             "http.port", 9000,
-            "http.allowed-origins", "https://example.com"
+            "http.allowed-origins", "https://example.com",
+            "management.port", 9191
         ));
 
         ApplicationConfiguration appConfig = ApplicationConfiguration.parse(config);

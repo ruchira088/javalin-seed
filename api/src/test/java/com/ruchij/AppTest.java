@@ -3,6 +3,8 @@ package com.ruchij;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.ruchij.config.ApplicationConfiguration;
 import com.ruchij.config.HttpConfiguration;
+import com.ruchij.config.ManagementConfiguration;
+import com.ruchij.metrics.MetricsRegistry;
 import com.ruchij.service.health.HealthService;
 import com.ruchij.service.health.models.ServiceInformation;
 import com.ruchij.utils.JsonUtils;
@@ -10,6 +12,7 @@ import com.ruchij.web.Routes;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import io.javalin.testtools.Response;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -25,6 +28,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppTest {
 
@@ -137,8 +141,10 @@ class AppTest {
     @Test
     void shouldStartAndStopServerWithRunMethod() throws Exception {
         int port = findAvailablePort();
+        int managementPort = findAvailablePort();
         ApplicationConfiguration config = new ApplicationConfiguration(
-            new HttpConfiguration(port, List.of())
+            new HttpConfiguration(port, List.of()),
+            new ManagementConfiguration(managementPort)
         );
 
         Thread serverThread = new Thread(() -> App.run(config));
@@ -150,6 +156,27 @@ class AppTest {
         JsonNode json = JsonUtils.OBJECT_MAPPER.readTree(response.body());
         assertNotNull(json.get("serviceName"));
         assertEquals("javalin-seed", json.get("serviceName").asText());
+
+        HttpResponse<String> metrics = waitForServer("http://127.0.0.1:" + managementPort + "/metrics");
+        assertEquals(200, metrics.statusCode());
+        assertTrue(metrics.body().contains("http_server_requests_seconds_count{"), metrics.body());
+        assertTrue(metrics.body().contains("uri=\"/service/info\""), metrics.body());
+        assertTrue(metrics.body().contains("jvm_memory_used_bytes{"), metrics.body());
+
+        HttpResponse<String> publicMetrics = waitForServer("http://127.0.0.1:" + port + "/metrics");
+        assertEquals(404, publicMetrics.statusCode());
+    }
+
+    @Test
+    void shouldServePrometheusMetricsFromManagementApp() {
+        PrometheusMeterRegistry registry = MetricsRegistry.create("test-app");
+
+        JavalinTest.test(App.managementJavalin(registry), (server, client) -> {
+            Response response = client.get("/metrics");
+            assertEquals(200, response.code());
+            assertEquals(App.PROMETHEUS_CONTENT_TYPE, response.headers().get("Content-Type").getFirst());
+            assertTrue(response.body().string().contains("application=\"test-app\""));
+        });
     }
 
     @Test

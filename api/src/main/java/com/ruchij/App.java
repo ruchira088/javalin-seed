@@ -1,6 +1,7 @@
 package com.ruchij;
 
 import com.ruchij.config.ApplicationConfiguration;
+import com.ruchij.metrics.MetricsRegistry;
 import com.ruchij.service.health.HealthServiceImpl;
 import com.ruchij.service.health.models.BuildInformation;
 import com.ruchij.utils.JsonUtils;
@@ -9,9 +10,13 @@ import com.ruchij.web.json.RequestBodyJsonMapper;
 import com.ruchij.web.middleware.CorrelationId;
 import com.ruchij.web.middleware.ExceptionMapper;
 import com.ruchij.web.middleware.RequestLogging;
+import com.ruchij.web.middleware.RequestMetrics;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.javalin.Javalin;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.openapi.plugin.swagger.SwaggerPlugin;
 import org.slf4j.Logger;
@@ -22,6 +27,8 @@ import java.util.List;
 import java.util.Properties;
 
 public class App {
+    static final String PROMETHEUS_CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8";
+
     private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
@@ -36,21 +43,38 @@ public class App {
         Clock clock = Clock.systemUTC();
         BuildInformation buildInformation = BuildInformation.get();
 
+        PrometheusMeterRegistry meterRegistry = MetricsRegistry.create(buildInformation.name());
+
         Routes routes = routes(applicationConfiguration, properties, buildInformation, clock);
 
-        Javalin app = javalin(routes, applicationConfiguration.httpConfiguration().allowedOrigins());
+        Javalin app = javalin(routes, applicationConfiguration.httpConfiguration().allowedOrigins(), meterRegistry);
         app.start(applicationConfiguration.httpConfiguration().port());
 
-        logger.info("Server is listening on port {}...", applicationConfiguration.httpConfiguration().port());
+        Javalin managementApp = managementJavalin(meterRegistry);
+        managementApp.start(applicationConfiguration.managementConfiguration().port());
+
+        logger.info(
+            "Server is listening on port {} (management on port {})...",
+            applicationConfiguration.httpConfiguration().port(),
+            applicationConfiguration.managementConfiguration().port()
+        );
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Shutting down server...");
             app.stop();
+            managementApp.stop();
             logger.info("Server has been shut down.");
         }));
     }
 
+    /** {@link #javalin(Routes, List, MeterRegistry)} with request metrics recorded into a throwaway registry. */
     public static Javalin javalin(Routes routes, List<String> allowedOrigins) {
+        return javalin(routes, allowedOrigins, new SimpleMeterRegistry());
+    }
+
+    public static Javalin javalin(Routes routes, List<String> allowedOrigins, MeterRegistry meterRegistry) {
+        RequestMetrics requestMetrics = new RequestMetrics(meterRegistry);
+
         return Javalin.create(javalinConfig -> {
             javalinConfig.concurrency.useVirtualThreads = true;
             javalinConfig.jsonMapper(new RequestBodyJsonMapper(JsonUtils.OBJECT_MAPPER));
@@ -88,7 +112,21 @@ public class App {
             javalinConfig.routes.apiBuilder(routes);
             CorrelationId.register(javalinConfig.routes);
             ExceptionMapper.handle(javalinConfig.routes);
-            RequestLogging.register(javalinConfig.requestLogger);
+            javalinConfig.requestLogger.http((context, executionTimeMs) -> {
+                RequestLogging.log(context, executionTimeMs);
+                requestMetrics.record(context, executionTimeMs);
+            });
+        });
+    }
+
+    /**
+     * The internal server for operational endpoints. It is deliberately bare (no CORS, OpenAPI or request logging) and
+     * is bound to its own port so Prometheus can scrape it without {@code /metrics} being reachable from the Ingress.
+     */
+    public static Javalin managementJavalin(PrometheusMeterRegistry meterRegistry) {
+        return Javalin.create(javalinConfig -> {
+            javalinConfig.startup.showJavalinBanner = false;
+            javalinConfig.routes.get("/metrics", context -> context.contentType(PROMETHEUS_CONTENT_TYPE).result(meterRegistry.scrape()));
         });
     }
 

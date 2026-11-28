@@ -23,12 +23,14 @@ dependencies {
 
     implementation(
         platform(libs.jackson.bom),
+        platform(libs.micrometer.bom),
         libs.javalin,
         libs.typesafe.config,
         libs.logback.classic,
         libs.logstash.logback.encoder,
         libs.jackson.databind,
         libs.jackson.datatype.jdk8,
+        libs.micrometer.registry.prometheus,
         libs.javalin.openapi.plugin,
         libs.javalin.swagger.plugin
     )

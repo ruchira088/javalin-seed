@@ -13,6 +13,12 @@ spec:
       labels:
         app: javalin-seed
         branch: "{{ git_branch }}"
+      # Annotation-based Prometheus discovery. The metrics port is deliberately absent from the Service, so it is
+      # reachable in-cluster by pod IP but never through the Ingress.
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: /metrics
     spec:
       securityContext:
         runAsNonRoot: true
@@ -72,6 +78,8 @@ spec:
           ports:
             - name: javalin-port
               containerPort: 8080
+            - name: metrics-port
+              containerPort: 9090
           resources:
             requests:
               cpu: 250m

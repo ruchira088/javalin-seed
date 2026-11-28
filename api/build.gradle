@@ -22,10 +22,12 @@ dependencies {
     annotationProcessor libs.javalin.openapi.annotation.processor
 
     implementation(
-        libs.javalin.bundle,
+        platform(libs.jackson.bom),
+        libs.javalin,
         libs.typesafe.config,
         libs.logback.classic,
         libs.logstash.logback.encoder,
+        libs.jackson.databind,
         libs.jackson.datatype.jdk8,
         libs.javalin.openapi.plugin,
         libs.javalin.swagger.plugin
@@ -35,6 +37,7 @@ dependencies {
         platform(libs.junit.bom),
         libs.junit.jupiter,
         libs.junit.platform.launcher,
+        libs.javalin.testtools,
         libs.mockito.core
     )
 }
